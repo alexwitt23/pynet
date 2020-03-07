@@ -3,7 +3,7 @@
 import numpy as np 
 
 
-class ReLU():
+class ReLU:
 
     @staticmethod
     def __call__(x: np.ndarray) -> None:

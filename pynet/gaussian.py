@@ -1,5 +1,5 @@
 """
-Building on guassian1 by adding activations
+Building on guassian2 by using optimizer to manage training.
 """
 
 import numpy as np 
@@ -9,6 +9,7 @@ from layers.fullyconnected import linear
 from layers.softmax import softmax
 from core.model import model
 from losses.mse import mse
+from optimizers.optimizer import  sgd
 
 
 if __name__ == '__main__':
@@ -24,12 +25,15 @@ if __name__ == '__main__':
     # Loss of choice
     loss_fn = mse(input_size=2)
 
+    # Optimizer 
+    optim = sgd(test_model, lr=1e-3, weight_decay=1e-5)
+
     # Training on Gaussian distribution
     mu, sigma = 0, 1
     target = (np.array([[mu, sigma]]))
 
     losses: float = []
-    for i in range(100000):
+    for i in range(400):
         data = np.expand_dims(np.random.normal(mu, sigma, 50), axis=0)
         out = test_model(data)
 
@@ -38,8 +42,9 @@ if __name__ == '__main__':
 
         out += (target,)
         loss = loss_fn(*out)
+        optim.step(loss_fn.backprop())
+
         losses.append(loss)
-        test_model.backwards(loss_fn.backprop())
         
         print(f"Loss: {loss}.")
 
