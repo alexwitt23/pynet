@@ -9,6 +9,7 @@ z = w*h + b, then the sigmoid activaion for turning z into a probability.
 (p 177)
 """
 
+# TODO
 import numpy as np 
 
 

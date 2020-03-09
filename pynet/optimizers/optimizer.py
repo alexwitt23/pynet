@@ -10,6 +10,8 @@ class sgd:
         self.lr = lr
 
     def step(self, grad: np.ndarray):
+        self.grad = grad
         for layer in reversed(self.model.layers):
-            grad = layer.backprop(grad, self.lr, self.weight_decay)
+            self.grad = layer.backprop(self.grad, self.lr, self.weight_decay)
+            
         
