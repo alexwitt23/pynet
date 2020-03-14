@@ -89,8 +89,7 @@ linear_model = Model(
 loss_fn = NLLLoss()
 optimizer = sgd(linear_model, lr=1e-4, weight_decay=1e-3)
 
-for i in range(10000):
-
+for i in range(1):
     out = linear_model(np.array(X))
     if not isinstance(out, tuple):
         out = (out,)
@@ -105,7 +104,7 @@ for i in range(10000):
 scores = linear_model(X)
 predicted_class = np.argmax(scores, axis=1)
 print('training accuracy: %.2f' % (np.mean(predicted_class == y)))
-
+"""
 h = 0.02
 x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
 y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
@@ -123,5 +122,5 @@ plt.contourf(xx, yy, Z, cmap=plt.cm.Spectral, alpha=0.8)
 plt.scatter(X[:, 0], X[:, 1], c=y, s=40, cmap=plt.cm.Spectral)
 plt.xlim(xx.min(), xx.max())
 plt.ylim(yy.min(), yy.max())
-plt.show()
-
+#plt.show()
+"""
