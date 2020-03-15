@@ -46,7 +46,9 @@ class Model:
 
     def load(self, path: pathlib) -> None:
         "Load params."
+        print("Loading")
         assert path.exists(), f"{path} does not exist."
+
         with path.open('rb') as f:
             model_data = pickle.load(f)
             

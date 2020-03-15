@@ -89,7 +89,7 @@ if __name__ == "__main__":
         Linear(10, 3, bias=True, activation=None),
         LogSoftmax(input_size=3, axis=1),
     )
-    """
+    
     loss_fn = NLLLoss()
     optimizer = sgd(model, lr=1e-0, weight_decay=1e-3)
     print(model.parameters())
@@ -123,7 +123,7 @@ if __name__ == "__main__":
     save_frames_as_gif(temp_dir, save_gif)
 
     model.save(pathlib.Path("test.pkl"))
-    """
+    
     model.load(pathlib.Path("test.pkl"))
 
     scores = model(X)
