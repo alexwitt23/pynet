@@ -1,4 +1,4 @@
-#!/usr/bin pytthon3
+#!/usr/bin python3
 """
 Attempt at training a model on spiral pattern. 
 Inspiration from: http://cs231n.github.io/neural-networks-case-study.
