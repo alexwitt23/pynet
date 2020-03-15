@@ -27,7 +27,19 @@ class linear:
         """
         self.input_size = input_size
         self.output_size = output_size
-        self.weights = np.random.randn(input_size, output_size) * 0.01
+        #self.weights = np.random.randn(input_size, output_size) * 0.01
+        
+        if input_size == 2:
+            self.weights = np.array(
+                [[-0.00340968,  0.00922037,  0.00454824],
+                 [ 0.0111051,  -0.00854046, -0.00534238]]
+            )
+        else:
+            self.weights = W2 = np.array(
+                [[-1.16532044e-02, -5.37445506e-03, -4.95144427e-03],
+                [ 6.10609272e-03,  1.46506992e-02,  2.83345353e-03],
+                [ 3.41002516e-05, -4.60160503e-03, -7.07745397e-03]]
+            )
         self.input = np.empty([input_size])
 
         if activation is None:
@@ -40,9 +52,9 @@ class linear:
         self.regularization = regularize_dict[regularization]
 
         if self.use_bias:
-            self.biases = np.random.rand(1, output_size) * 0.01
-        else:
             self.biases = np.zeros((1, output_size))
+        else:
+            self.biases = None
 
     def __call__(self, x: np.ndarray) -> np.ndarray:
         """Forward pass.
@@ -55,10 +67,13 @@ class linear:
         """
         self.input = x
         self.out = np.dot(self.input, self.weights)
+        print("input", self.input[1][:])
         # Apply bias if included
         if self.use_bias:
             self.out += self.biases
-
+        if self.use_activation:
+            self.out = self.activation.apply(self.out)
+        print("forward-pass", self.out[1][:])
         return self.out
 
     def backprop(self, dout: np.ndarray, lr: float, decay: float) -> np.ndarray:
@@ -77,20 +92,20 @@ class linear:
 
         if self.use_activation:
             dout = self.activation.backprop(dout)
-
+            print(dout)
         # Backprop to input for this layer
         dinput = np.dot(dout, self.weights.transpose())
-
+        #print(dinput)
         # Adjust weights
         self.weights -= (
             np.dot(self.input.transpose(), dout) * lr 
         ) 
-        """
+        
         if decay > 0:
             self.weights -= self.regularization.apply(self.weights, decay) * lr
-
+        
         if self.use_bias:
             self.biases -= (dout.sum(axis=0) * lr)
-        """
+        
         return dinput
 

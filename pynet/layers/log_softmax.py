@@ -22,12 +22,11 @@ class LogSoftmax:
         
         self.out = np.log(inter) - np.log(inter.sum(axis=self.axis, keepdims=True))
         self.softmax = np.exp(self.out)
+
         return self.out
 
     def backprop(self, x: np.ndarray, lr: float, weight_decay: float) -> np.ndarray:
         # Apply gradient, which is 1 - p(x) where x = target.
         # Then complete chain rule with incoming gradient
-        print(self.softmax)
         self.softmax += np.multiply(1, x)
-        print(self.softmax / self.input.shape[0])
         return self.softmax / self.input.shape[0]

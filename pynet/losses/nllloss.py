@@ -16,7 +16,6 @@ class NLLLoss:
         pass
 
     def __call__(self, x: np.ndarray, target: np.ndarray) -> float:
-        print("WWW")
         self.input = x
         self.target = target
         self.batch_size = self.input.shape[0]

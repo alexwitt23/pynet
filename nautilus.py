@@ -81,13 +81,13 @@ plt.ylim(yy.min(), yy.max())
 
 """
 linear_model = Model(
-    linear(2, 100, bias=True),
-    linear(100, 3, bias=True, activation=None),
+    linear(2, 3, bias=True),
+    linear(3, 3, bias=True, activation=None),
     LogSoftmax(input_size=3, axis=1)
 )
 
 loss_fn = NLLLoss()
-optimizer = sgd(linear_model, lr=1e-4, weight_decay=1e-3)
+optimizer = sgd(linear_model, lr=1e-1, weight_decay=1e-3)
 
 for i in range(1):
     out = linear_model(np.array(X))
@@ -101,9 +101,9 @@ for i in range(1):
 
 
 # evaluate training set accuracy
-scores = linear_model(X)
-predicted_class = np.argmax(scores, axis=1)
-print('training accuracy: %.2f' % (np.mean(predicted_class == y)))
+#scores = linear_model(X)
+#predicted_class = np.argmax(scores, axis=1)
+#print('training accuracy: %.2f' % (np.mean(predicted_class == y)))
 """
 h = 0.02
 x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
@@ -122,5 +122,6 @@ plt.contourf(xx, yy, Z, cmap=plt.cm.Spectral, alpha=0.8)
 plt.scatter(X[:, 0], X[:, 1], c=y, s=40, cmap=plt.cm.Spectral)
 plt.xlim(xx.min(), xx.max())
 plt.ylim(yy.min(), yy.max())
-#plt.show()
+plt.show()
+
 """
