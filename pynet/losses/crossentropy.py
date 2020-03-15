@@ -16,7 +16,7 @@ NOTE: Usually softmax and cross entropy are combined into one step because the
 their combined chain rule works out cleanly.
 """
 
-import numpy as np 
+import numpy as np
 
 
 class CrossEntropyLoss:
@@ -38,7 +38,7 @@ class CrossEntropyLoss:
 
         n = x.shape[0]  # Batch size
         log_likelihood = -np.log(x[n, target])
-        return np.average(log_likelihood) 
+        return np.average(log_likelihood)
 
     def backprop(self) -> np.ndarray:
         return np.divide(self.target, self.pred)

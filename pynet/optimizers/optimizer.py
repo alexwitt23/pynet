@@ -1,6 +1,6 @@
 """Attempt at an optimizer."""
 
-import numpy as np 
+import numpy as np
 
 
 class sgd:
@@ -13,5 +13,3 @@ class sgd:
         self.grad = grad
         for layer in reversed(self.model.layers):
             self.grad = layer.backprop(self.grad, self.lr, self.weight_decay)
-            
-        

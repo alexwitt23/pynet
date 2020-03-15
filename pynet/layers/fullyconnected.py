@@ -2,20 +2,20 @@
 Fully connected layer defined by y = Wx + b.
 """
 
-import numpy as np 
+import numpy as np
 
-from pynet.activations.relu import ReLU
+from pynet.core.activations import activations_dict
 from pynet.core.regularizer import regularize_dict
 
 
 class Linear:
     def __init__(
-        self, 
-        input_size: int, 
-        output_size: int, 
-        activation = ReLU, 
+        self,
+        input_size: int,
+        output_size: int,
+        activation="ReLU",
         regularization: str = "l2",
-        bias: bool = False
+        bias: bool = False,
     ) -> None:
         """
         Given input size m, and output size n, create [m X n] matrix 
@@ -28,14 +28,14 @@ class Linear:
         self.input_size = input_size
         self.output_size = output_size
         self.weights = np.random.randn(input_size, output_size) * 0.01
-        
         self.input = np.empty([input_size])
+        self.num_params = input_size * output_size
 
         if activation is None:
             self.use_activation = False
         else:
             self.use_activation = True
-            self.activation = activation
+            self.activation = activations_dict[activation]
 
         self.use_bias = bias
         self.regularization = regularize_dict[regularization]
@@ -79,20 +79,17 @@ class Linear:
 
         if self.use_activation:
             dout = self.activation.backprop(dout, self.out)
-            
+
         # Backprop to input for this layer
         dinput = np.dot(dout, self.weights.transpose())
-        
+
         # Adjust weights
-        self.weights -= (
-            np.dot(self.input.transpose(), dout) * lr 
-        ) 
-        
+        self.weights -= np.dot(self.input.transpose(), dout) * lr
+
         if decay > 0:
             self.weights -= self.regularization.apply(self.weights, decay) * lr
-        
-        if self.use_bias:
-            self.biases -= (dout.sum(axis=0) * lr)
-        
-        return dinput
 
+        if self.use_bias:
+            self.biases -= dout.sum(axis=0) * lr
+
+        return dinput
