@@ -106,7 +106,10 @@ if __name__ == "__main__":
         out += (np.expand_dims(np.array(y), axis=1),)
         loss = loss_fn(*out)
         optimizer.step(loss_fn.backwards())
-
+        
+        # Zero out the gradient accumulation
+        if i % 10 == 0:
+            optimizer.zero_grad()
         if i % 100 == 0:
             print(f"Iteration {i}, Loss: {loss}")
 

@@ -83,13 +83,15 @@ class Linear:
         # Backprop to input for this layer
         dinput = np.dot(dout, self.weights.transpose())
 
+        return dinput
+
+    def update(self, grad: np.ndarray, lr: float, decay: float) -> None:
+        """Takes in the amount to update weights by. Input given by optimzers."""
         # Adjust weights
-        self.weights -= np.dot(self.input.transpose(), dout) * lr
+        self.weights -= np.dot(self.input.transpose(), grad) * lr
 
         if decay > 0:
             self.weights -= self.regularization.apply(self.weights, decay) * lr
 
         if self.use_bias:
-            self.biases -= dout.sum(axis=0) * lr
-
-        return dinput
+            self.biases -= grad.sum(axis=0) * lr

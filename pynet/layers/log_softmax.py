@@ -32,3 +32,7 @@ class LogSoftmax:
         # Then complete chain rule with incoming gradient
         self.softmax += np.multiply(1, x)
         return self.softmax / self.input.shape[0]
+
+    def update(self, grad, lr, weight_decay) -> None:
+        """No params for logsoftmax."""
+        return None
