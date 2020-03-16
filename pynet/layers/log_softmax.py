@@ -27,7 +27,7 @@ class LogSoftmax:
 
         return self.out
 
-    def backprop(self, x: np.ndarray, lr: float, weight_decay: float) -> np.ndarray:
+    def backprop(self, x: np.ndarray) -> np.ndarray:
         # Apply gradient, which is 1 - p(x) where x = target.
         # Then complete chain rule with incoming gradient
         self.softmax += np.multiply(1, x)

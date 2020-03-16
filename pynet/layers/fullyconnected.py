@@ -61,9 +61,10 @@ class Linear:
             self.out += self.biases
         if self.use_activation:
             self.out = self.activation.apply(self.out)
+
         return self.out
 
-    def backprop(self, dout: np.ndarray, lr: float, decay: float) -> np.ndarray:
+    def backprop(self, dout: np.ndarray) -> np.ndarray:
         """
         Backprop of gradient to weights, biases, and chain rule.
         See derivation: http://cs231n.stanford.edu/handouts/linear-backprop.pdf.
@@ -88,10 +89,12 @@ class Linear:
     def update(self, grad: np.ndarray, lr: float, decay: float) -> None:
         """Takes in the amount to update weights by. Input given by optimzers."""
         # Adjust weights
-        self.weights -= np.dot(self.input.transpose(), grad) * lr
+        self.weights += np.dot(self.input.transpose(), grad)
 
         if decay > 0:
             self.weights -= self.regularization.apply(self.weights, decay) * lr
 
         if self.use_bias:
-            self.biases -= grad.sum(axis=0) * lr
+            self.biases += grad.sum(axis=0)
+
+        return None

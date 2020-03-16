@@ -75,8 +75,8 @@ def save_frames_as_gif(frame_dir: pathlib.Path, save_path: pathlib.Path):
         format="GIF",
         append_images=imgs,
         save_all=True,
-        duration=100,
-        loop=0,
+        duration=1000,
+        loop=1,
     )
 
 
@@ -91,14 +91,14 @@ if __name__ == "__main__":
     )
     
     loss_fn = NLLLoss()
-    optimizer = sgd(model, lr=1e-0, weight_decay=1e-3)
+    optimizer = sgd(model, lr=1.5e-2, momentum=0.9, weight_decay=1e-4, nesterov=True)
     print(model.parameters())
     temp_dir = pathlib.Path(tempfile.TemporaryDirectory().name)
     temp_dir.mkdir()
     print(f"Writing frames to {temp_dir}.")
     
     # Train the model
-    for i in range(1000):
+    for i in range(80000):
         out = model(np.array(X))
         if not isinstance(out, tuple):
             out = (out,)
@@ -106,10 +106,11 @@ if __name__ == "__main__":
         out += (np.expand_dims(np.array(y), axis=1),)
         loss = loss_fn(*out)
         optimizer.step(loss_fn.backwards())
-        
+
         # Zero out the gradient accumulation
-        if i % 10 == 0:
+        if i % 5 == 0:
             optimizer.zero_grad()
+
         if i % 100 == 0:
             print(f"Iteration {i}, Loss: {loss}")
 
