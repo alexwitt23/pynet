@@ -1,6 +1,6 @@
 """Optimizers for deeplearning."""
 
-from typing import Dict 
+from typing import Dict
 
 import numpy as np
 
@@ -9,13 +9,14 @@ import pynet
 
 class sgd:
     """Stochastic gradient descent with option of momentum and Nesterov."""
+
     def __init__(
-        self, 
-        model: pynet.core.model.Model, 
-        lr: float = 1e-1, 
-        momentum: float = 0.0, 
+        self,
+        model: pynet.core.model.Model,
+        lr: float = 1e-1,
+        momentum: float = 0.0,
         weight_decay: float = 0,
-        nesterov = False
+        nesterov=False,
     ) -> None:
         self.model = model
         self.weight_decay = weight_decay
@@ -27,7 +28,7 @@ class sgd:
         assert momentum < 1, "Please set momentum [0, 1)."
         self.momentum_decay = momentum
 
-        # Set the velocity 
+        # Set the velocity
         self.zero_grad()
 
     def step(self, grad: np.ndarray):
@@ -39,18 +40,16 @@ class sgd:
             if self.nesterov:
                 # Make sure the layer has weights and we aren't on first step of accumulation
                 if layer.weights is not None and self.velocity_dict[idx] is not 0:
-                    layer.weights += (self.momentum_decay * np.average(self.velocity_dict[idx], axis=0))
+                    layer.weights += self.momentum_decay * np.average(
+                        self.velocity_dict[idx], axis=0
+                    )
 
             self.grad = layer.backprop(self.grad)
             # Calculate velocity
-            self.velocity_dict[idx + 1] = (
-                self.momentum_decay * self.velocity_dict[idx + 1] - (self.lr * self.grad) 
-            )
-            layer.update(
-                self.velocity_dict[idx],
-                self.lr, 
-                self.weight_decay
-            )
+            self.velocity_dict[idx + 1] = self.momentum_decay * self.velocity_dict[
+                idx + 1
+            ] - (self.lr * self.grad)
+            layer.update(self.velocity_dict[idx], self.lr, self.weight_decay)
 
         return None
 
@@ -59,4 +58,3 @@ class sgd:
         self.velocity_dict = {idx: 0 for idx in range(len(self.model.layers) + 1)}
 
         return None
-        

@@ -89,14 +89,14 @@ if __name__ == "__main__":
         Linear(10, 3, bias=True, activation=None),
         LogSoftmax(input_size=3, axis=1),
     )
-    
+
     loss_fn = NLLLoss()
     optimizer = sgd(model, lr=1.5e-2, momentum=0.9, weight_decay=1e-4, nesterov=True)
     print(model.parameters())
     temp_dir = pathlib.Path(tempfile.TemporaryDirectory().name)
     temp_dir.mkdir()
     print(f"Writing frames to {temp_dir}.")
-    
+
     # Train the model
     for i in range(80000):
         out = model(np.array(X))
@@ -121,13 +121,13 @@ if __name__ == "__main__":
     scores = model(X)
     predicted_class = np.argmax(scores, axis=1)
     print("training accuracy: %.2f" % (np.mean(predicted_class == y)))
-    
+
     # Create gif
     save_gif = pathlib.Path("nautilus.gif")
     save_frames_as_gif(temp_dir, save_gif)
 
     model.save(pathlib.Path("test.pkl"))
-    
+
     model.load(pathlib.Path("test.pkl"))
 
     scores = model(X)
