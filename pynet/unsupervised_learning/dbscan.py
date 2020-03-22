@@ -31,9 +31,9 @@ class DBSCAN:
         Args:
             x: input data with shape [N x D] where N is the number of data 
             points and D is the dimension of each point.
-        Returns:
         
-        ??????
+        Returns:
+            List of Lists corresponding to the ids of points in each cluster.
         """
         assert len(x.shape) == 2, "Input must be 2 dimensional "
         self.x = x
@@ -70,7 +70,13 @@ class DBSCAN:
         """Recursively go through cluster to expand to all points within epsilon.
         
         Args:
-        ???????????/"""
+           current_point: Refers to the point whose neighbors are being investigated.
+           neighbor_ids: Neighbors of current_point that meet <= self.epsilon criteria.
+
+        Returns:
+            Cluster which has been expanded to include all the points that neighbor 
+            current_point. 
+        """
         cluster = [current_point]
         for idx in neighbor_ids[:]:
             # Make sure this is a new point to consider
@@ -93,11 +99,11 @@ if __name__ == '__main__':
     from sklearn.datasets.samples_generator import make_blobs
     import matplotlib.pyplot as plt
     
-    num_centers = 4
+    num_centers = 10
     X, y_true = make_blobs(n_samples=300, centers=num_centers,
                         cluster_std=0.60, random_state=0)
 
-    dbscan = DBSCAN(epsilon=.3, min_pts=3)
+    dbscan = DBSCAN(epsilon=.7, min_pts=3)
     clusters = dbscan.fit(X)
     
     plt.scatter(
@@ -108,14 +114,12 @@ if __name__ == '__main__':
         cmap='viridis'
     )
 
-    # Create colors for each cluster
-    colors = np.random.rand(len(clusters), 3)
     for idx, cluster in enumerate(clusters):
-        
+        color = np.tile(np.random.rand(3,), (len(cluster), 1))
         plt.scatter(
             X[cluster[:], 0], 
             X[cluster[:], 1], 
-            c=colors[idx], 
+            c=color, 
             s=50, 
             cmap='viridis'
         )
