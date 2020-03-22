@@ -7,11 +7,11 @@ import numpy as np
 
 class Conv2D:
     def __init__(
-        self, 
-        in_channels: int, 
-        out_channels: int, 
-        kernel_size: int, 
-        stride: int = 1, 
+        self,
+        in_channels: int,
+        out_channels: int,
+        kernel_size: int,
+        stride: int = 1,
         padding: int = 0,
         bias: bool = True,
     ) -> None:
@@ -37,8 +37,8 @@ class Conv2D:
         print(self.input.shape)
         # Don't know HW of input until here..
         self.output_shape = int(
-            (1 / self.stride) * (2 *  self.padding + x.shape[1] - self.kernel_size) + 1
-        )      
+            (1 / self.stride) * (2 * self.padding + x.shape[1] - self.kernel_size) + 1
+        )
         # NWHC
         self.output = np.zeros(
             (x.shape[0], self.output_shape, self.output_shape, self.output_size)
@@ -54,13 +54,8 @@ class Conv2D:
                         # Multiply input by filter
                         self.output[item, j, k, f] = np.sum(
                             np.multiply(
-                                x[
-                                    item,
-                                    j + self.kernel_size,
-                                    k + self.kernel_size,
-                                    :
-                                ], 
-                                self.kernel[:, :, f]
+                                x[item, j + self.kernel_size, k + self.kernel_size, :],
+                                self.kernel[:, :, f],
                             )
                         )
 
@@ -68,4 +63,3 @@ class Conv2D:
                     self.output += self.biases[0, f]
 
         return self.output
-

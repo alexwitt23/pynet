@@ -1,13 +1,13 @@
 """Contains all the layers in this library."""
 
-import abc 
-import numpy as np 
+import abc
+import numpy as np
 
 
 class Layer(abc.ABC):
     """Define a collection of member functions that must be 
     implemented by all layers."""
-    
+
     @abc.abstractmethod
     def __call__(self, x: np.ndarray) -> np.ndarray:
         raise NotImplementedError("Must override __call__ method!")
@@ -17,30 +17,27 @@ class Layer(abc.ABC):
         """Send the gradient through this layer and update weights."""
         raise NotImplementedError("Must override backprop method!")
 
-    @abc.abstractmethod        
+    @abc.abstractmethod
     def parameters(self) -> float:
         """Number of trainable params in the model."""
         raise NotImplementedError("Must implement the number of layer parameters!")
 
-    @abc.abstractmethod 
+    @abc.abstractmethod
     def input_size(self) -> np.ndarray:
         """Size of layer's input size."""
-        raise NotImplementedError("Implement input_size!")   
+        raise NotImplementedError("Implement input_size!")
 
-    @abc.abstractmethod 
+    @abc.abstractmethod
     def output_size(self) -> np.ndarray:
         """Size of layer's output size."""
-        raise NotImplementedError("Implement output_size!")   
+        raise NotImplementedError("Implement output_size!")
 
 
 """Fully connected layer defined by y = Wx + b."""
+
+
 class Linear(Layer):
-    def __init__(
-        self,
-        input_size: int,
-        output_size: int,
-        bias: bool = False,
-    ) -> None:
+    def __init__(self, input_size: int, output_size: int, bias: bool = False,) -> None:
         super().__init__()
         """Linear, or fully connected, layer.
         
@@ -119,8 +116,10 @@ class Linear(Layer):
 
         return None
 
+
 class LogSoftmax(Layer):
     """Apply log to softmax for more preferable numerical properties."""
+
     def __init__(self, input_size, axis) -> None:
         super().__init__()
         self.input_size = input_size
@@ -146,4 +145,3 @@ class LogSoftmax(Layer):
     def update(self, grad, lr, weight_decay) -> None:
         """No params for logsoftmax."""
         return None
-

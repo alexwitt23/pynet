@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """CNN model trained with Fashion-MNIST."""
 
-import pathlib 
-import numpy as np 
+import pathlib
+import numpy as np
 from tensorflow import keras
 
 import pynet
@@ -19,7 +19,7 @@ if __name__ == "__main__":
     """Create a model."""
     model = Model(
         Flatten(),
-        Linear(28*28, 128, bias=True),
+        Linear(28 * 28, 128, bias=True),
         Linear(128, 10, bias=True, activation=None),
         LogSoftmax(input_size=10, axis=1),
     )
@@ -29,15 +29,15 @@ if __name__ == "__main__":
     fashion_mnist = keras.datasets.fashion_mnist
 
     (train_images, train_labels), (test_images, test_labels) = fashion_mnist.load_data()
-    
+
     batch_size = 100
     # Train the model
     for i in range(80000):
         for b in range(0, train_images.shape[0], batch_size):
-            out = model(train_images[i : batch_size, :, :])
+            out = model(train_images[i:batch_size, :, :])
             if not isinstance(out, tuple):
                 out = (out,)
-            out += (np.expand_dims(train_labels[i : batch_size], axis=1),)
+            out += (np.expand_dims(train_labels[i:batch_size], axis=1),)
             loss = loss_fn(*out)
             optimizer.step(loss_fn.backwards())
 

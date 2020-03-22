@@ -6,13 +6,12 @@ https://en.wikipedia.org/wiki/DBSCAN."""
 
 from typing import List
 
-import numpy as np 
+import numpy as np
 
-from pynet.core import utils 
+from pynet.core import utils
 
 
 class DBSCAN:
-
     def __init__(self, epsilon: float, min_pts: int) -> None:
         """
         Args:
@@ -45,27 +44,24 @@ class DBSCAN:
 
             # See if this counts as a cluster
             if len(neighbor_ids) >= self.min_pts:
-                # Go through the cluster and expand to all possible points. 
-                # Call recursive function to find the entire cluster starting from 
+                # Go through the cluster and expand to all possible points.
+                # Call recursive function to find the entire cluster starting from
                 # this list of neighbors
-                self.all_clusters.append(
-                    self._expand_cluster(i, neighbor_ids)
-                )
-                
+                self.all_clusters.append(self._expand_cluster(i, neighbor_ids))
 
         return self.all_clusters
 
     def _find_neighbors(self, source: np.ndarray) -> np.ndarray:
         """Loop through and get distance to this point."""
         # Record the _ids_ of points that are <= epsilon threshold
-        return (
-            [idx for idx, point in enumerate(self.x[:]) if utils.euclidean_distance(source, point) <= self.epsilon]
-        )
+        return [
+            idx
+            for idx, point in enumerate(self.x[:])
+            if utils.euclidean_distance(source, point) <= self.epsilon
+        ]
 
     def _expand_cluster(
-        self, 
-        current_point: int, 
-        neighbor_ids: np.ndarray
+        self, current_point: int, neighbor_ids: np.ndarray
     ) -> np.ndarray:
         """Recursively go through cluster to expand to all points within epsilon.
         
@@ -92,36 +88,27 @@ class DBSCAN:
                     cluster.extend([idx])
 
         return cluster
-        
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
+
+    np.random.seed(0)
 
     from sklearn.datasets.samples_generator import make_blobs
     import matplotlib.pyplot as plt
-    
-    num_centers = 10
-    X, y_true = make_blobs(n_samples=300, centers=num_centers,
-                        cluster_std=0.60, random_state=0)
 
-    dbscan = DBSCAN(epsilon=.7, min_pts=3)
-    clusters = dbscan.fit(X)
-    
-    plt.scatter(
-        X[:, 0], 
-        X[:, 1], 
-        c='blue', 
-        s=50, 
-        cmap='viridis'
+    num_centers = 6
+    X, y_true = make_blobs(
+        n_samples=300, centers=num_centers, cluster_std=0.60, random_state=0
     )
+
+    dbscan = DBSCAN(epsilon=0.5, min_pts=3)
+    clusters = dbscan.fit(X)
+
+    plt.scatter(X[:, 0], X[:, 1], c="blue", s=50, cmap="viridis")
 
     for idx, cluster in enumerate(clusters):
         color = np.tile(np.random.rand(3,), (len(cluster), 1))
-        plt.scatter(
-            X[cluster[:], 0], 
-            X[cluster[:], 1], 
-            c=color, 
-            s=50, 
-            cmap='viridis'
-        )
-        
+        plt.scatter(X[cluster[:], 0], X[cluster[:], 1], c=color, s=50, cmap="viridis")
+
     plt.show()

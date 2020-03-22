@@ -1,6 +1,7 @@
 """Simple layer that flattens input."""
 
-import numpy as np 
+import numpy as np
+
 
 class Flatten:
     def __init__(self) -> None:

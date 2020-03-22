@@ -16,7 +16,7 @@ class Model:
         """
         self.layers = list(layers)
 
-        #for i in range(len(self.layers) - 1):
+        # for i in range(len(self.layers) - 1):
         #    assert self.layers[i].output_size == self.layers[i + 1].input_size
 
     def __call__(self, x: np.ndarray) -> np.ndarray:
