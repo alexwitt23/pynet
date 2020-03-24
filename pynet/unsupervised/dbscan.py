@@ -2,7 +2,10 @@
 """Implementation of 
 Density-based spatial clustering of applications with noise (DBSCAN).
 This is the most cited clustering algorithm in scientific literature.
-https://en.wikipedia.org/wiki/DBSCAN."""
+https://en.wikipedia.org/wiki/DBSCAN.
+
+Usage: PYTHONPATH=$PWD pynet/unsupervised/dbscan.py
+"""
 
 from typing import List
 
@@ -85,7 +88,7 @@ class DBSCAN:
                 if len(neighbor_ids) >= self.min_pts:
                     cluster.extend(self._expand_cluster(idx, neighbor_ids))
                 else:
-                    cluster.extend([idx])
+                    cluster.append(idx)
 
         return cluster
 
