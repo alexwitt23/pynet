@@ -32,7 +32,7 @@ class ReLU(Layer):
     def input_size(self) -> np.ndarray:
         None
 
-    def output_size(self) -> np.ndarray::
+    def output_size(self) -> np.ndarray:
         None
 
 

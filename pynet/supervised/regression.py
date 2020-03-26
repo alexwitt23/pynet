@@ -4,9 +4,9 @@
 Source:
 https://towardsdatascience.com/machine-learning-for-beginners-d247a9420dab
 """
-from typing import List 
+from typing import List
 
-import numpy as np 
+import numpy as np
 
 
 class LinearRegression:
@@ -16,7 +16,7 @@ class LinearRegression:
     https://www.youtube.com/watch?v=ewnc1cXJmGA."""
 
     def __init__(self) -> None:
-        pass 
+        pass
 
     def fit(self, x: np.ndarray, y: np.ndarray) -> List[float]:
         """Fitting function.
@@ -30,7 +30,7 @@ class LinearRegression:
         """
         assert len(x.shape) == 1, "Independent variable must be one dimension!"
         assert len(y.shape) == 1, "Dependent variable must be one dimension!"
-        
+
         x_avg = np.mean(x)
         y_avg = np.mean(y)
 
@@ -44,9 +44,9 @@ class LinearRegression:
 
 
 # TODO(alex) Multiple Linear Regression
-# 
+#
 # TODO(alex) Polynomial Regression
-# 
+#
 # TODO(alex) Support Vector Machine
 #
 # TODO(alex) Ridge Regression
@@ -60,5 +60,3 @@ class LinearRegression:
 # TODO(alex) Decision Tree Regression
 #
 # TODO(alex) Random Forest Regression
-
-

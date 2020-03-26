@@ -8,10 +8,9 @@ Source: https://en.wikipedia.org/wiki/OPTICS_algorithm
 Usage: PYTHONPATH=$PWD pynet/unsupervised/optics.py
 """
 
-import numpy as np 
+import numpy as np
 
 # TODO
 class OPTICS:
-
     def __init__(self) -> None:
         pass

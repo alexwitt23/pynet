@@ -1,5 +1,7 @@
 """Contains all the layers in this library."""
 
+from typing import Tuple
+
 import abc
 import numpy as np
 
@@ -53,8 +55,8 @@ class Linear(Layer):
             Matrix of size [N x D]
         """
         super().__init__()
-        self.input_size = np.array(input_size)
-        self.output_size = np.array(output_size)
+        self.input_size = input_size
+        self.output_size = output_size
         self.weights = np.random.randn(input_size, output_size) * 0.01
         self.input = np.empty([input_size])
         self.num_params = input_size * output_size
@@ -115,7 +117,7 @@ class Linear(Layer):
 
     def parameters(self) -> int:
         return self.input_size * self.output_size
-    
+
     def input_size(self) -> np.ndarray:
         return self.input_size
 
@@ -125,66 +127,98 @@ class Linear(Layer):
 
 class Conv2D(Layer):
     """Two dimensional convolutional layer."""
-    
+
     def __init__(
         self,
         in_channels: int,
         out_channels: int,
-        kernel_size: int,
+        kernel_size: Tuple[int, int],
         stride: int = 1,
         padding: int = 0,
         bias: bool = True,
     ) -> None:
         super().__init__()
         self.input_size = in_channels
-        self.output_size = out_channels
-        self.kernel_size = kernel_size
+        self.num_filters = out_channels
+        self.kernel_size = kernel_size  # (W, H)
         self.stride = stride
         self.padding = padding
-        self.use_bias = bias
 
         # Create numpy filter volume
-        self.kernel = np.random.randn(kernel_size, kernel_size, out_channels)
+        self.kernel = np.random.randn(kernel_size[0], kernel_size[1], out_channels)
 
-        if self.use_bias:
+        if bias:
             self.biases = np.zeros((1, out_channels))
         else:
             self.biases = None
 
     def __call__(self, x: np.ndarray) -> np.ndarray:
-        """Forward pass."""
-        # Pad the input
-        self.input = np.pad(x, (self.padding,))
-        print(self.input.shape)
-        # Don't know HW of input until here..
-        self.output_shape = int(
-            (1 / self.stride) * (2 * self.padding + x.shape[1] - self.kernel_size) + 1
-        )
-        # NWHC
-        self.output = np.zeros(
-            (x.shape[0], self.output_shape, self.output_shape, self.output_size)
-        )
-        assert len(x.shape) == 4
-        # Loop over the batch
-        for item in range(x.shape[0]):
-            # Loop over the filters
-            for f in range(self.output_size):
-                # Apply fiter to entire volume and loop over the input
-                for j in range(0, x.shape[1] - self.kernel_size, self.stride):
-                    for k in range(0, x.shape[2] - self.kernel_size, self.stride):
-                        # Multiply input by filter
-                        self.output[item, j, k, f] = np.sum(
-                            np.multiply(
-                                x[item, j + self.kernel_size, k + self.kernel_size, :],
-                                self.kernel[:, :, f],
-                            )
-                        )
+        """Forward pass through convolutional layer. This will be implemented in a 
+        slightly confusing fashion, but the idea is to level numpy's matrix math to 
+        speed up the calculations."""
 
-                if self.use_bias:
-                    self.output += self.biases[0, f]
+        assert len(x.shape) == 4, "Input must be [N, W, H, C]"
+        # Get the width and height of the incoming data.
+        batch_size, width, height, filters_in = x.shape
+        assert filters_in == self.input_size, f"Improper input {x.shape}!"
+        # Calculate output filter W, H
+        width_out = int((width + self.padding - self.kernel_size[0]) / self.stride + 1)
+        height_out = int(
+            (height + self.padding - self.kernel_size[1]) / self.stride + 1
+        )
+        
+        # Equivalent to [x for _ in range(kernel_height) for x in range(kernel_width)]
+        i = np.repeat(
+            np.tile(np.arange(self.kernel_size[0]), self.kernel_size[1]),
+            self.input_size,
+        )
+        # Equivalent to [y for y in range(kernel_height) for _ in range(kernel_width)]
+        j = np.tile(
+            np.arange(self.kernel_size[1]), self.kernel_size[0] * self.input_size
+        )
 
+        # These are the indices of the output width [x for x in range(width_out)]
+        # np.repeat turns this in to [x for _ in range(out_height) for x in range(width_out)]
+        i1 = self.stride * np.repeat(np.arange(width_out), height_out)
+
+        # This is equivalent to [y for y in range(out_height) for _ in range(width_out)]
+        j1 = self.stride * np.tile(np.arange(height_out), width_out)
+
+        i = i.reshape(-1, 1) + i1.reshape(1, -1)
+        j = j.reshape(-1, 1) + j1.reshape(1, -1)
+
+        # Get indices for each of the incoming filter repeated by the number of weights one of this
+        # layer's filters.
+        filter_ids = np.repeat(
+            np.arange(self.input_size), self.kernel_size[0] * self.kernel_size[1]
+        ).reshape(-1, 1)
+
+        img_slices = (
+            x[:, i, j, filter_ids]
+            .transpose(1, 2, 0)
+            .reshape(self.kernel_size[0] * self.kernel_size[1] * self.input_size, -1)
+        )
+        w_ = self.kernel.reshape((self.num_filters, -1))
+        retval = np.dot(w_, img_slices)  # (num_filters_out, out_w * out_h * batch_size)
+        retval = retval.reshape(((self.num_filters, width_out, height_out, batch_size)))
+        return retval.transpose(3, 1, 2, 0)
+
+
+    def backwards(self):
+        pass
+
+    def input_size(self):
+        pass
+
+    def parameters(self) -> int:
+        return self.output_size * self.kernel_size[0] * self.kernel_size[1]
+
+    def output_size(self):
+        pass
         return self.output
 
+    def update(self):
+        return None
 
 
 class LogSoftmax(Layer):

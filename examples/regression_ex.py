@@ -4,12 +4,12 @@
 Usage: PYTHONPATH=$PWD examples/regression_ex.py
 """
 
-import numpy as np 
+import numpy as np
 
 from pynet.supervised import regression
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     np.random.seed(0)
 
@@ -24,7 +24,7 @@ if __name__ == '__main__':
 
     a, b = linear_regression.fit(x, y)
 
-    # Get the range to plot line on 
+    # Get the range to plot line on
 
     plt.scatter(x, y, c="blue", s=50, cmap="viridis")
     plt.plot(x, a * x + b)
