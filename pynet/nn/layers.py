@@ -159,13 +159,13 @@ class Conv2D(Layer):
         assert len(x.shape) == 4, "Input must be [N, W, H, C]"
         # Get the width and height of the incoming data.
         batch_size, width, height, filters_in = x.shape
-        assert filters_in == self.input_size, f"Improper input {x.shape}!"
+        assert filters_in == self.input_size, f"Improper input channles: {x.shape}!"
         # Calculate output filter W, H
         width_out = int((width + self.padding - self.kernel_size[0]) / self.stride + 1)
         height_out = int(
             (height + self.padding - self.kernel_size[1]) / self.stride + 1
         )
-        
+
         # Equivalent to [x for _ in range(kernel_height) for x in range(kernel_width)]
         i = np.repeat(
             np.tile(np.arange(self.kernel_size[0]), self.kernel_size[1]),
@@ -175,7 +175,7 @@ class Conv2D(Layer):
         j = np.tile(
             np.arange(self.kernel_size[1]), self.kernel_size[0] * self.input_size
         )
-
+        
         # These are the indices of the output width [x for x in range(width_out)]
         # np.repeat turns this in to [x for _ in range(out_height) for x in range(width_out)]
         i1 = self.stride * np.repeat(np.arange(width_out), height_out)
@@ -185,7 +185,7 @@ class Conv2D(Layer):
 
         i = i.reshape(-1, 1) + i1.reshape(1, -1)
         j = j.reshape(-1, 1) + j1.reshape(1, -1)
-
+        print(i.shape, j.shape)
         # Get indices for each of the incoming filter repeated by the number of weights one of this
         # layer's filters.
         filter_ids = np.repeat(
@@ -198,16 +198,18 @@ class Conv2D(Layer):
             .reshape(self.kernel_size[0] * self.kernel_size[1] * self.input_size, -1)
         )
         # Flatten out each filter into a column
-        self.weights_col = self.kernel.reshape((self.num_filters, -1))
-        retval = np.dot(self.weights_colweights_col, self.img_slices)  # (num_filters_out, out_w * out_h * batch_size)
+        self.weights_col = np.repeat(
+            self.kernel.reshape((self.num_filters, -1)), self.input_size, axis=1
+        )
+        retval = np.dot(self.weights_col, self.img_slices)  # (num_filters_out, out_w * out_h * batch_size)
         retval = retval.reshape(((self.num_filters, width_out, height_out, batch_size)))
+        
         return retval.transpose(3, 1, 2, 0)
-
 
     def backwards(self, dout: np.ndarray) -> np.ndarray:
         
         # Note the similarity to the dense layer:
-        return np.dot(dout, self.weights_col)
+        return np.dot(dout, self.weights_col.transpose())
         
 
     def input_size(self):
@@ -216,9 +218,8 @@ class Conv2D(Layer):
     def parameters(self) -> int:
         return self.output_size * self.kernel_size[0] * self.kernel_size[1]
 
-    def output_size(self):
-        pass
-        return self.output
+    def output_size(self) -> int:
+        return self.num_filters
 
     def update(self):
         return None
