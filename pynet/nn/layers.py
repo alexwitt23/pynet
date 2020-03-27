@@ -98,9 +98,8 @@ class Linear(Layer):
         """
         self.grad = dout
         # Backprop to input for this layer
-        dinput = np.dot(dout, self.weights.transpose())
+        return np.dot(dout, self.weights.transpose())
 
-        return dinput
 
     def update(self, lr: float = 1, decay: float = 0) -> None:
         """Takes in the amount to update weights by. Input given by optimzers."""
@@ -193,19 +192,23 @@ class Conv2D(Layer):
             np.arange(self.input_size), self.kernel_size[0] * self.kernel_size[1]
         ).reshape(-1, 1)
 
-        img_slices = (
+        self.img_slices = (
             x[:, i, j, filter_ids]
             .transpose(1, 2, 0)
             .reshape(self.kernel_size[0] * self.kernel_size[1] * self.input_size, -1)
         )
-        w_ = self.kernel.reshape((self.num_filters, -1))
-        retval = np.dot(w_, img_slices)  # (num_filters_out, out_w * out_h * batch_size)
+        # Flatten out each filter into a column
+        self.weights_col = self.kernel.reshape((self.num_filters, -1))
+        retval = np.dot(self.weights_colweights_col, self.img_slices)  # (num_filters_out, out_w * out_h * batch_size)
         retval = retval.reshape(((self.num_filters, width_out, height_out, batch_size)))
         return retval.transpose(3, 1, 2, 0)
 
 
-    def backwards(self):
-        pass
+    def backwards(self, dout: np.ndarray) -> np.ndarray:
+        
+        # Note the similarity to the dense layer:
+        return np.dot(dout, self.weights_col)
+        
 
     def input_size(self):
         pass
