@@ -15,25 +15,30 @@ class ReLU(Layer):
 
     def __init__(self) -> None:
         super().__init__()
-
+        self.weights = False
+        
     def __call__(self, x: np.ndarray) -> np.ndarray:
+        self.input = x
         return np.maximum(0, x)
 
-    def backwards(self, dy: np.ndarray, y: np.ndarray) -> np.ndarray:
+    def backwards(self, dy: np.ndarray) -> np.ndarray:
         """Takes in the dL/dy and y and applies relu backprop.
         dy = d/dx(ReLU(x)) = { 1 if x > 0; 0 if x <=0 }
         """
-        dy[y <= 0] = 0
+        dy[self.input <= 0] = 0
         return dy
+
+    def update(self, grad: np.ndarray, lr: float = 1, decay: float = 0) -> None:
+        pass 
 
     def parameters(self) -> int:
         return 0
 
-    def input_size(self) -> np.ndarray:
-        None
+    def input_size(self) -> int:
+        return 0
 
-    def output_size(self) -> np.ndarray:
-        None
+    def output_size(self) -> int:
+        return 0
 
 
 class LeakyReLU:

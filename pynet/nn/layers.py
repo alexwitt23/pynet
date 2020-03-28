@@ -20,12 +20,12 @@ class Layer(abc.ABC):
         raise NotImplementedError("Must override backprop method!")
 
     @abc.abstractmethod
-    def update(self, lr: float = 1, gamma: float = 0) -> None:
+    def update(self, grad: np.ndarray, lr: float = 1, decay: float = 0) -> None:
         """Send the gradient through this layer and update weights."""
         raise NotImplementedError("Must override backprop method!")
 
     @abc.abstractmethod
-    def parameters(self) -> float:
+    def parameters(self) -> int:
         """Number of trainable params in the model."""
         raise NotImplementedError("Must implement the number of layer parameters!")
 
@@ -55,10 +55,9 @@ class Linear(Layer):
             Matrix of size [N x D]
         """
         super().__init__()
-        self.input_size = input_size
-        self.output_size = output_size
+        self.input_dim = input_size
+        self.output_dim = output_size
         self.weights = np.random.randn(input_size, output_size) * 0.01
-        self.input = np.empty([input_size])
         self.num_params = input_size * output_size
 
         self.use_bias = bias
@@ -96,32 +95,29 @@ class Linear(Layer):
         Returns:
             Derivative of loss w.r.t this layer's input.
         """
-        self.grad = dout
         # Backprop to input for this layer
         return np.dot(dout, self.weights.transpose())
 
 
-    def update(self, lr: float = 1, decay: float = 0) -> None:
+    def update(self, grad: np.ndarray) -> None:
         """Takes in the amount to update weights by. Input given by optimzers."""
         # Adjust weights
-        self.weights += np.dot(self.input.transpose(), self.grad)
+        self.weights += np.dot(self.input.transpose(), grad)
         """
         if decay > 0:
             self.weights -= self.regularization.apply(self.weights, decay) * lr
         """
         if self.use_bias:
-            self.biases += self.grad.sum(axis=0)
-
-        return None
+            self.biases += grad.sum(axis=0)
 
     def parameters(self) -> int:
-        return self.input_size * self.output_size
+        return self.input_dim  * self.output_dim 
 
     def input_size(self) -> np.ndarray:
-        return self.input_size
+        return self.input_dim 
 
     def output_size(self) -> np.ndarray:
-        return self.output_size
+        return self.output_dim 
 
 
 class Conv2D(Layer):
@@ -139,6 +135,7 @@ class Conv2D(Layer):
         super().__init__()
         self.input_size = in_channels
         self.num_filters = out_channels
+        self.weights = True
         self.kernel_size = kernel_size  # (W, H)
         self.stride = stride
         self.padding = padding
@@ -185,7 +182,6 @@ class Conv2D(Layer):
 
         i = i.reshape(-1, 1) + i1.reshape(1, -1)
         j = j.reshape(-1, 1) + j1.reshape(1, -1)
-        print(i.shape, j.shape)
         # Get indices for each of the incoming filter repeated by the number of weights one of this
         # layer's filters.
         filter_ids = np.repeat(
@@ -207,9 +203,12 @@ class Conv2D(Layer):
         return retval.transpose(3, 1, 2, 0)
 
     def backwards(self, dout: np.ndarray) -> np.ndarray:
-        
+        # Take the input gradient and reshape for reshaped weights.
+
+        dout = dout.transpose(1, 2, 3, 0).reshape(self.num_filters, -1)
+
         # Note the similarity to the dense layer:
-        return np.dot(dout, self.weights_col.transpose())
+        return np.dot(dout.transpose(), self.weights_col)
         
 
     def input_size(self):
@@ -221,16 +220,17 @@ class Conv2D(Layer):
     def output_size(self) -> int:
         return self.num_filters
 
-    def update(self):
-        return None
+    def update(self, grad: np.ndarray, lr: float = 1, decay: float = 0) -> None:
+        pass
 
 
-class LogSoftmax():
+class LogSoftmax(Layer):
     """Apply log to softmax for more preferable numerical properties."""
 
     def __init__(self, input_size, axis) -> None:
         super().__init__()
-        self.input_size = input_size
+        self.input_dim = input_size
+        self.output_dim = input_size
         self.axis = axis
         self.num_params = 0
         self.weights = None
@@ -238,36 +238,53 @@ class LogSoftmax():
     def __call__(self, x: np.ndarray) -> np.ndarray:
         self.input = x
         inter = np.exp(x)  # - np.amax(x, axis=self.axis, keepdims=True)
-
         self.out = np.log(inter) - np.log(inter.sum(axis=self.axis, keepdims=True))
         self.softmax = np.exp(self.out)
 
         return self.out
 
-    def backprop(self, x: np.ndarray) -> np.ndarray:
+    def backwards(self, x: np.ndarray) -> np.ndarray:
         # Apply gradient, which is 1 - p(x) where x = target.
         # Then complete chain rule with incoming gradient
         self.softmax += np.multiply(1, x)
         return self.softmax / self.input.shape[0]
 
-    def update(self, grad, lr, weight_decay) -> None:
+    def update(self, grad: np.ndarray, lr: float = 1, decay: float = 0) -> None:
         """No params for logsoftmax."""
-        return None
+        pass
+    
+    def parameters(self) -> int:
+        return self.num_params
+
+    def input_size(self) -> int:
+        return self.input_dim
+
+    def output_size(self) -> int:
+        return self.output_dim
 
 
-class Flatten:
+class Flatten(Layer):
     def __init__(self) -> None:
         self.weights = None
 
     def __call__(self, x: np.ndarray) -> np.ndarray:
-        """Assume batch is first dimension and grayscale.
-        x.shape = [batch, W, H]."""
-        dims = x.shape
-        return x.flatten()
+        """Assume batch is first..
+        x.shape = [batch, _]."""
+        self.input_size = x.shape
+        return x.reshape(x.shape[0], -1)
 
-    # TODO clean this up.
-    def backprop(self, dx: np.ndarray) -> None:
-        return dx
+    def backwards(self, dout: np.ndarray) -> None:
+        # Reshape gradient to input size
+        return dout.reshape(self.input_size)
 
-    def update(self, grad: np.ndarray, lr: float, decay: float) -> None:
+    def update(self, grad: np.ndarray, lr: float = 1, decay: float = 0) -> None:
         pass
+    
+    def parameters(self) -> int:
+        return 0
+    
+    def input_size(self) -> int:
+        return 0
+    
+    def output_size(self) -> int:
+        return 0

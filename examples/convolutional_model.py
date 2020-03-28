@@ -16,7 +16,7 @@ model = model.Model(
     layers.Conv2D(3, 3, (2, 2), stride=1, padding=0),
     layers.Flatten(),
     layers.Linear(48, 2),
-    layers.LogSoftmax(2, axis=1)
+    layers.LogSoftmax(input_size=2, axis=1)
 )
 
 loss_fn = nllloss.NLLLoss()

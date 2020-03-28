@@ -31,11 +31,12 @@ class sgd:
         # Set the velocity
         self.zero_grad()
 
-    def step(self, grad: np.ndarray):
+    def step(self, grad: np.ndarray) -> None:
         """Take the incoming grad from the loss fn and propogate through layers."""
-        self.grad: float = grad
-        self.velocity_dict[0] = grad
+        self.grad: np.ndarray = grad * self.lr
+        self.velocity_dict[0]: np.ndarray = grad
         for idx, layer in enumerate(reversed(self.model.layers)):
+            
             # Apply nesterov momentum (_correction factor_)
             if self.nesterov:
                 # Make sure the layer has weights and we aren't on first step of accumulation
@@ -43,18 +44,20 @@ class sgd:
                     layer.weights += self.momentum_decay * np.average(
                         self.velocity_dict[idx], axis=0
                     )
-
-            self.grad = layer.backprop(self.grad)
+                    
+            # Apply L2 weight regularization
+            if layer.weights is not None:
+                layer.weights -= layer.weights * self.weight_decay
+            
+            self.grad = layer.backwards(self.grad)
             # Calculate velocity
+            
             self.velocity_dict[idx + 1] = self.momentum_decay * self.velocity_dict[
                 idx + 1
             ] - (self.lr * self.grad)
-            layer.update(self.velocity_dict[idx], self.lr, self.weight_decay)
-
-        return None
+            
+            layer.update(self.velocity_dict[idx])
 
     def zero_grad(self) -> None:
         """Zeros out the accumulated velocity."""
         self.velocity_dict = {idx: 0 for idx in range(len(self.model.layers) + 1)}
-
-        return None
