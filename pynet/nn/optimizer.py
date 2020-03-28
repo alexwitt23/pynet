@@ -12,7 +12,7 @@ class sgd:
 
     def __init__(
         self,
-        model: pynet.core.model.Model,
+        model,
         lr: float = 1e-1,
         momentum: float = 0.0,
         weight_decay: float = 0,

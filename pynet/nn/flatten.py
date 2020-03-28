@@ -11,7 +11,7 @@ class Flatten:
         """Assume batch is first dimension and grayscale.
         x.shape = [batch, W, H]."""
         dims = x.shape
-        return x.reshape(dims[0], dims[1] * dims[2])
+        return x.flatten()
 
     # TODO clean this up.
     def backprop(self, dx: np.ndarray) -> None:

@@ -225,7 +225,7 @@ class Conv2D(Layer):
         return None
 
 
-class LogSoftmax(Layer):
+class LogSoftmax():
     """Apply log to softmax for more preferable numerical properties."""
 
     def __init__(self, input_size, axis) -> None:
@@ -253,3 +253,21 @@ class LogSoftmax(Layer):
     def update(self, grad, lr, weight_decay) -> None:
         """No params for logsoftmax."""
         return None
+
+
+class Flatten:
+    def __init__(self) -> None:
+        self.weights = None
+
+    def __call__(self, x: np.ndarray) -> np.ndarray:
+        """Assume batch is first dimension and grayscale.
+        x.shape = [batch, W, H]."""
+        dims = x.shape
+        return x.flatten()
+
+    # TODO clean this up.
+    def backprop(self, dx: np.ndarray) -> None:
+        return dx
+
+    def update(self, grad: np.ndarray, lr: float, decay: float) -> None:
+        pass
