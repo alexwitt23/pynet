@@ -1,11 +1,11 @@
-"""
-Base class for model.
-"""
+"""Base class for model."""
 
 import pathlib
 
 import numpy as np
 import pickle
+
+import pynet 
 
 
 class Model:
@@ -15,7 +15,7 @@ class Model:
             layers: list of layers.
         """
         self.layers = list(layers)
-
+        # TODO(alex) re implement this
         # for i in range(len(self.layers) - 1):
         #    assert self.layers[i].output_size == self.layers[i + 1].input_size
 

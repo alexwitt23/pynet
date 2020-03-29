@@ -1,5 +1,4 @@
-
-import numpy as np 
+import numpy as np
 
 class NLLLoss:
     """Negative log likelihood loss.
@@ -17,9 +16,9 @@ class NLLLoss:
         self.input = x
         self.target = target
         self.batch_size = self.input.shape[0]
-        return -1 * np.mean(x[range(self.batch_size), self.target[:]])
+        return -1 * np.mean(x[range(self.batch_size), self.target[:, 0]])
 
     def backwards(self) -> np.ndarray:
         self.grad = np.zeros((self.batch_size, self.input.shape[1]))
-        self.grad[range(self.batch_size), self.target[:]] = -1
+        self.grad[range(self.batch_size), self.target[:, 0]] = -1
         return self.grad

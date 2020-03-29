@@ -5,6 +5,8 @@ from typing import Tuple
 import abc
 import numpy as np
 
+import pynet
+
 
 class Layer(abc.ABC):
     """Define a collection of member functions that must be 
@@ -20,22 +22,17 @@ class Layer(abc.ABC):
         raise NotImplementedError("Must override backprop method!")
 
     @abc.abstractmethod
-    def update(self, grad: np.ndarray, lr: float = 1, decay: float = 0) -> None:
-        """Send the gradient through this layer and update weights."""
-        raise NotImplementedError("Must override backprop method!")
-
-    @abc.abstractmethod
     def parameters(self) -> int:
         """Number of trainable params in the model."""
         raise NotImplementedError("Must implement the number of layer parameters!")
 
     @abc.abstractmethod
-    def input_size(self) -> np.ndarray:
+    def input_size(self) -> int:
         """Size of layer's input size."""
         raise NotImplementedError("Implement input_size!")
 
     @abc.abstractmethod
-    def output_size(self) -> np.ndarray:
+    def output_size(self) -> int:
         """Size of layer's output size."""
         raise NotImplementedError("Implement output_size!")
 
@@ -57,7 +54,7 @@ class Linear(Layer):
         super().__init__()
         self.input_dim = input_size
         self.output_dim = output_size
-        self.weights = np.random.randn(input_size, output_size) * 0.01
+        self.weights = np.random.randn(input_size, output_size) * 0.1
         self.num_params = input_size * output_size
 
         self.use_bias = bias
@@ -66,6 +63,9 @@ class Linear(Layer):
             self.biases = np.zeros((1, output_size))
         else:
             self.biases = None
+        
+        self.optim_weights: pynet.nn.optimizer.Optimizer = None
+        self.optim_biases: pynet.nn.optimizer.Optimizer = None
 
     def __call__(self, x: np.ndarray) -> np.ndarray:
         """Forward pass.
@@ -84,7 +84,7 @@ class Linear(Layer):
 
         return self.out
 
-    def backwards(self, dout: np.ndarray) -> np.ndarray:
+    def backwards(self, dout: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """
         Backprop of gradient to weights, biases, and chain rule.
         See derivation: http://cs231n.stanford.edu/handouts/linear-backprop.pdf.
@@ -95,29 +95,26 @@ class Linear(Layer):
         Returns:
             Derivative of loss w.r.t this layer's input.
         """
-        # Backprop to input for this layer
-        return np.dot(dout, self.weights.transpose())
+        # Calc grad w.r.t input
+        din = np.dot(dout, self.weights.transpose())
+        # Calc grad w.r.t weights
+        self.dw = np.dot(self.input.transpose(), dout)
+        # Now call the optimizer to update this layer's weights and biases
+        self.optim_weights.update(self.weights, self.dw)
 
-
-    def update(self, grad: np.ndarray) -> None:
-        """Takes in the amount to update weights by. Input given by optimzers."""
-        # Adjust weights
-        self.weights += np.dot(self.input.transpose(), grad)
-        """
-        if decay > 0:
-            self.weights -= self.regularization.apply(self.weights, decay) * lr
-        """
-        if self.use_bias:
-            self.biases += grad.sum(axis=0)
+        if self.biases is not None:
+            self.optim_biases.update(self.biases, dout.sum(axis=0))
+            
+        return din
 
     def parameters(self) -> int:
-        return self.input_dim  * self.output_dim 
+        return self.input_dim * self.output_dim
 
-    def input_size(self) -> np.ndarray:
-        return self.input_dim 
+    def input_size(self) -> int:
+        return self.input_dim
 
-    def output_size(self) -> np.ndarray:
-        return self.output_dim 
+    def output_size(self) -> int:
+        return self.output_dim
 
 
 class Conv2D(Layer):
@@ -172,7 +169,7 @@ class Conv2D(Layer):
         j = np.tile(
             np.arange(self.kernel_size[1]), self.kernel_size[0] * self.input_size
         )
-        
+
         # These are the indices of the output width [x for x in range(width_out)]
         # np.repeat turns this in to [x for _ in range(out_height) for x in range(width_out)]
         i1 = self.stride * np.repeat(np.arange(width_out), height_out)
@@ -197,9 +194,11 @@ class Conv2D(Layer):
         self.weights_col = np.repeat(
             self.kernel.reshape((self.num_filters, -1)), self.input_size, axis=1
         )
-        retval = np.dot(self.weights_col, self.img_slices)  # (num_filters_out, out_w * out_h * batch_size)
+        retval = np.dot(
+            self.weights_col, self.img_slices
+        )  # (num_filters_out, out_w * out_h * batch_size)
         retval = retval.reshape(((self.num_filters, width_out, height_out, batch_size)))
-        
+
         return retval.transpose(3, 1, 2, 0)
 
     def backwards(self, dout: np.ndarray) -> np.ndarray:
@@ -209,7 +208,6 @@ class Conv2D(Layer):
 
         # Note the similarity to the dense layer:
         return np.dot(dout.transpose(), self.weights_col)
-        
 
     def input_size(self):
         pass
@@ -220,7 +218,7 @@ class Conv2D(Layer):
     def output_size(self) -> int:
         return self.num_filters
 
-    def update(self, grad: np.ndarray, lr: float = 1, decay: float = 0) -> None:
+    def update(self, grad: np.ndarray) -> None:
         pass
 
 
@@ -243,16 +241,12 @@ class LogSoftmax(Layer):
 
         return self.out
 
-    def backwards(self, x: np.ndarray) -> np.ndarray:
+    def backwards(self, dout: np.ndarray) -> np.ndarray:
         # Apply gradient, which is 1 - p(x) where x = target.
         # Then complete chain rule with incoming gradient
-        self.softmax += np.multiply(1, x)
+        self.softmax += dout
         return self.softmax / self.input.shape[0]
 
-    def update(self, grad: np.ndarray, lr: float = 1, decay: float = 0) -> None:
-        """No params for logsoftmax."""
-        pass
-    
     def parameters(self) -> int:
         return self.num_params
 
@@ -264,6 +258,8 @@ class LogSoftmax(Layer):
 
 
 class Flatten(Layer):
+    """Layer that will flatten input."""
+
     def __init__(self) -> None:
         self.weights = None
 
@@ -275,16 +271,40 @@ class Flatten(Layer):
 
     def backwards(self, dout: np.ndarray) -> None:
         # Reshape gradient to input size
-        return dout.reshape(self.input_size)
+        return dout.reshape(self.input_size), None
 
-    def update(self, grad: np.ndarray, lr: float = 1, decay: float = 0) -> None:
+    def update(self, grad: np.ndarray) -> None:
         pass
-    
+
     def parameters(self) -> int:
         return 0
-    
+
     def input_size(self) -> int:
         return 0
+
+    def output_size(self) -> int:
+        return 0
+
+
+class Dropout(Layer):
+    """Layer which will randomly cancel out the outputs from units in 
+    previous layer."""
+
+    def __init__(self, prob: float = .1) -> None:   
+        self.prob = prob
     
+    def __call__(self, x: np.ndarray) -> np.ndarray:
+        self.mask = np.where(np.random.uniform(size=x.shape) > self.prob, 1, 0)
+        return x * self.mask
+
+    def backwards(self, dout: np.ndarray) -> np.ndarray:
+        return dout * self.mask
+
+    def parameters(self) -> int:
+        return 0
+
+    def input_size(self) -> int:
+        return 0
+
     def output_size(self) -> int:
         return 0

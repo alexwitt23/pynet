@@ -8,21 +8,30 @@ import pathlib
 import numpy as np
 from tensorflow import keras
 
-from pynet.nn import layers, activations, losses, optimizer
-from pynet.core.model import Model
+from pynet.nn import layers, activations, losses, optimizer, model
 
 
 if __name__ == "__main__":
 
     """Create a model."""
-    model = Model(
+    fc_model = model.Model(
         layers.Flatten(),
-        layers.Linear(28 * 28, 128, bias=True),
-        layers.Linear(128, 10, bias=True),
+        layers.Linear(28 * 28, 300, bias=True),
+        activations.ReLU6(),
+        layers.Dropout(prob=.3),
+        layers.Linear(300, 200, bias=True),
+        activations.ReLU6(),
+        layers.Dropout(prob=.3),
+        layers.Linear(200, 40, bias=True),
+        activations.ReLU6(),
+        layers.Dropout(prob=.3),
+        layers.Linear(40, 10, bias=True),
         layers.LogSoftmax(input_size=10, axis=1),
     )
     loss_fn = losses.NLLLoss()
-    optimizer = optimizer.sgd(model, lr=1e-1, momentum=0.9, weight_decay=1e-4, nesterov=True)
+    optimizer = optimizer.sgd(
+        fc_model, lr=6e-1, momentum=0.9, weight_decay=1e-4, nesterov=False
+    )
 
     fashion_mnist = keras.datasets.fashion_mnist
 
@@ -30,27 +39,26 @@ if __name__ == "__main__":
 
     batch_size = 6000
     # Train the model
-    for i in range(100000):
+    for epoch in range(100000):
         for b in range(0, train_images.shape[0], batch_size):
-            out = model(train_images[i:batch_size, :, :] / 255)
+
+            out = fc_model(train_images[b : b + batch_size, :, :] / 255)
             if not isinstance(out, tuple):
                 out = (out,)
-            out += (np.expand_dims(train_labels[i:batch_size], axis=1),)
+            out += (np.expand_dims(train_labels[b : b + batch_size], axis=1),)
             loss = loss_fn(*out)
             optimizer.step(loss_fn.backwards())
 
-            optimizer.zero_grad()
-
             if b % 6000 == 0:
-                print(f"Epoch {i}, Loss: {loss}")
+                print(f"Epoch {epoch}, Loss: {loss}")
 
+        if epoch % 40 == 0:
+            optimizer.lr /= 10
+    
         # Loop over eval data
         num_right = 0
         for b in range(0, test_images.shape[0], batch_size):
-            out = model(test_images[i:batch_size, :, :] / 255)
+            out = fc_model(test_images[b : b + batch_size, :, :] / 255)
+            num_right += (np.argmax(out, axis=1) == test_labels[b : b + batch_size]).sum()
 
-            if b % 6000 == 0:
-                print(f"Epoch {i}, Loss: {loss}")
-            num_right += (np.argmax(out, axis=1) == test_labels[i:batch_size]).sum()
-        
         print(f"Eval accuracy: {num_right / test_images.shape[0]}")
