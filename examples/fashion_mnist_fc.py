@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CNN model trained with Fashion-MNIST.
+"""CNN model trained with Fashion-MNIST. We'll use TF for loading the data
 
 Usage: PYTHONPATH=$(pwd) examples/fashion_mnist_fc.py"""
 
@@ -8,7 +8,13 @@ import pathlib
 import numpy as np
 from tensorflow import keras
 
-from pynet.nn import layers, activations, losses, optimizer, model
+from pynet.nn import (
+    layers, 
+    activations, 
+    losses, 
+    optimizer, 
+    model
+)
 
 
 if __name__ == "__main__":

@@ -1,8 +1,8 @@
 """Contains all the layers in this library."""
 
 from typing import Tuple
-
 import abc
+
 import numpy as np
 
 import pynet
