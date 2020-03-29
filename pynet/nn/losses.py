@@ -1,16 +1,13 @@
-"""Negative log likelihood loss.
-
-Assumes that input log(p)
-
-loss = -sum(p(target)) / batch_size
-
-p(target) should be 0 if, if prob 1 that input is type target.
-"""
-
-import numpy as np 
-
+import numpy as np
 
 class NLLLoss:
+    """Negative log likelihood loss.
+
+    Assumes that input log(p)
+
+    loss = -sum(p(target)) / batch_size
+
+    p(target) should be 0 if, if prob 1 that input is type target."""
 
     def __init__(self) -> None:
         pass
@@ -19,7 +16,7 @@ class NLLLoss:
         self.input = x
         self.target = target
         self.batch_size = self.input.shape[0]
-        return -1 * np.sum(x[range(self.batch_size), self.target[:, 0]]) / self.batch_size
+        return -1 * np.mean(x[range(self.batch_size), self.target[:, 0]])
 
     def backwards(self) -> np.ndarray:
         self.grad = np.zeros((self.batch_size, self.input.shape[1]))
