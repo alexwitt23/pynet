@@ -57,8 +57,9 @@ class MSE(Loss):
         grad = (self.target - self.pred) / self.target.shape[1]
         return grad
 
+
 # TODO
-class CrossEntropyLoss(Layer):
+class CrossEntropyLoss(Loss):
     """Cross Entropy Loss.
     Based on Kullback-Leibler (KL) Divergence Dkl(P||Q) which can also
     be written as Expectation of log(P(x) / Q(x)) given P(x). KL Divergence is 

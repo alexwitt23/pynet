@@ -10,7 +10,7 @@ import numpy as np
 
 
 class LinearRegression:
-    # TODO(alex) implement with gradient
+    # TODO(alex) implement with gradient?
     """Linear regression with least squares error.
     This is a really succinct derivation using calculus:
     https://www.youtube.com/watch?v=ewnc1cXJmGA."""

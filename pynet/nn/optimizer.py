@@ -1,14 +1,16 @@
 """Optimizers for deeplearning."""
 
 from typing import Dict
-import copy 
+import copy
 
 import numpy as np
 
 import pynet
 
+
 class Optimizer:
     pass
+
 
 class sgd:
     """Stochastic gradient descent with option of momentum and Nesterov."""
@@ -54,17 +56,16 @@ class sgd:
                     layer.update(self.momentum_decay * self.velocity_dict[idx])
             """
             # Propagate the gradient back through this layer, and get gradietn w.r.t weights
-            self.dout = layer.backwards(self.dout)  
-    
+            self.dout = layer.backwards(self.dout)
+
     def update(self, weights: np.ndarray, dw: np.ndarray) -> None:
-        
         # Calculate velocity
         self.momentum = (
-            self.momentum_decay * self.momentum -  (1 - self.momentum_decay) * dw
+            self.momentum_decay * self.momentum - (1 - self.momentum_decay) * dw
         )
         if weights is not None:
-            # Update this layer 
-            weights += (self.momentum  + weights * self.weight_decay) * self.lr
+            # Update this layer
+            weights += (self.momentum + weights * self.weight_decay) * self.lr
 
     def zero_momentum(self) -> None:
         """Zeros out the accumulated velocity."""

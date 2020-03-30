@@ -1,6 +1,6 @@
 """Contains all the layers in this library."""
 
-from typing import Tuple
+from typing import Tuple, List
 import abc
 
 import numpy as np
@@ -63,7 +63,7 @@ class Linear(Layer):
             self.biases = np.zeros((1, output_size))
         else:
             self.biases = None
-        
+
         self.optim_weights: pynet.nn.optimizer.Optimizer = None
         self.optim_biases: pynet.nn.optimizer.Optimizer = None
 
@@ -104,7 +104,7 @@ class Linear(Layer):
 
         if self.biases is not None:
             self.optim_biases.update(self.biases, dout.sum(axis=0))
-            
+
         return din
 
     def parameters(self) -> int:
@@ -290,9 +290,9 @@ class Dropout(Layer):
     """Layer which will randomly cancel out the outputs from units in 
     previous layer."""
 
-    def __init__(self, prob: float = .1) -> None:   
+    def __init__(self, prob: float = 0.1) -> None:
         self.prob = prob
-    
+
     def __call__(self, x: np.ndarray) -> np.ndarray:
         self.mask = np.where(np.random.uniform(size=x.shape) > self.prob, 1, 0)
         return x * self.mask
@@ -302,6 +302,71 @@ class Dropout(Layer):
 
     def parameters(self) -> int:
         return 0
+
+    def input_size(self) -> int:
+        return 0
+
+    def output_size(self) -> int:
+        return 0
+
+
+class BatchNorm(Layer):
+    """Batch normalization was originally proposed as a way to 'whitten' 
+    the layer activations to accelerate convergence, orignal paper: 
+    https://arxiv.org/pdf/1502.03167.pdf.
+
+    There is still active research on this topic and just how batch norm
+    really impacts models. One example, https://arxiv.org/pdf/1805.11604.pdf,
+    claims batch norm smooths the gradient field, helping training be less jittery."""
+
+    def __init__(self, input_shape: List[int], momentum: float = 0.999) -> None:
+        self.momentum = momentum
+        self.gamma = np.ones((input_shape, 1))
+        self.beta = np.zeros(input_shape)
+        self.eplison = 0
+
+        self.optim_weights: pynet.nn.optimizer.Optimizer = None
+        self.optim_biases: pynet.nn.optimizer.Optimizer = None
+
+    def __call__(self, x: np.ndarray) -> np.ndarray:
+        # Get the mean of the input.
+        x_mu = np.mean(x, axis=0)
+        # Get the variance of the input.
+        x_var = np.var(x, axis=0)
+
+        self.x_norm = (x - x_mu) / np.sqrt(x_var + self.eplison)
+
+        return np.dot(self.x_norm, self.gamma) + self.beta
+
+    def backwards(self, dout: np.ndarray) -> np.ndarray:
+
+        # Backprop to grad to input.
+        # First, the gradient of dL / dgamma = (dL / dy) * (dy / dgamma)
+        dgamma = np.sum(np.dot(self.x_norm.transpose(), dout), axis=0, keepdims=True)
+        # The dL / dBeta = (dL / dy) * (dy / dBeta)
+        dbeta = np.sum(dout, axis=0)
+        # Get the dL / dx_norm = (dL / dy) * (dy / dx_norm)
+        dx_norm = np.dot(dout, self.gamma)
+
+        # Now get dL / dx. For a derivation, see here:
+        # https://kevinzakka.github.io/2016/09/14/batch_normalization.
+        dout = (
+            (1 / dout.shape[0])
+            * self.x_norm
+            * (
+                dout.shape[0] * dx_norm
+                - np.sum(dx_norm, axis=0, keepdims=True)
+                - np.dot(self.x_norm, np.dot(dx_norm.transpose(), self.x_norm).transpose())
+            )
+        )
+        # Update the layer's params
+        self.optim_weights.update(self.beta, dbeta)
+        self.optim_biases.update(self.gamma, dgamma.transpose())
+
+        return dout
+
+    def parameters(self) -> int:
+        return 2
 
     def input_size(self) -> int:
         return 0

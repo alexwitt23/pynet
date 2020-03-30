@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CNN model trained with Fashion-MNIST. We'll use TF for loading the data
+"""CNN model trained with Fashion-MNIST. We'll use TF for loading the data.
 
 Usage: PYTHONPATH=$(pwd) examples/fashion_mnist_fc.py"""
 
@@ -8,13 +8,7 @@ import pathlib
 import numpy as np
 from tensorflow import keras
 
-from pynet.nn import (
-    layers, 
-    activations, 
-    losses, 
-    optimizer, 
-    model
-)
+from pynet.nn import layers, activations, losses, optimizer, model
 
 
 if __name__ == "__main__":
@@ -23,20 +17,21 @@ if __name__ == "__main__":
     fc_model = model.Model(
         layers.Flatten(),
         layers.Linear(28 * 28, 300, bias=True),
-        activations.ReLU6(),
-        layers.Dropout(prob=.3),
+        layers.BatchNorm(300),
+        #activations.ReLU6(),
+        layers.Dropout(prob=0.3),
         layers.Linear(300, 200, bias=True),
         activations.ReLU6(),
-        layers.Dropout(prob=.3),
+        layers.Dropout(prob=0.3),
         layers.Linear(200, 40, bias=True),
         activations.ReLU6(),
-        layers.Dropout(prob=.3),
+        layers.Dropout(prob=0.3),
         layers.Linear(40, 10, bias=True),
         layers.LogSoftmax(input_size=10, axis=1),
     )
     loss_fn = losses.NLLLoss()
     optimizer = optimizer.sgd(
-        fc_model, lr=6e-1, momentum=0.9, weight_decay=1e-4, nesterov=False
+        fc_model, lr=3e-1, momentum=0.9, weight_decay=1e-4, nesterov=False
     )
 
     fashion_mnist = keras.datasets.fashion_mnist
@@ -60,11 +55,13 @@ if __name__ == "__main__":
 
         if epoch % 40 == 0:
             optimizer.lr /= 10
-    
+
         # Loop over eval data
         num_right = 0
         for b in range(0, test_images.shape[0], batch_size):
             out = fc_model(test_images[b : b + batch_size, :, :] / 255)
-            num_right += (np.argmax(out, axis=1) == test_labels[b : b + batch_size]).sum()
+            num_right += (
+                np.argmax(out, axis=1) == test_labels[b : b + batch_size]
+            ).sum()
 
         print(f"Eval accuracy: {num_right / test_images.shape[0]}")
