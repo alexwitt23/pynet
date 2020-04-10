@@ -54,7 +54,7 @@ class Linear(Layer):
         super().__init__()
         self.input_dim = input_size
         self.output_dim = output_size
-        self.weights = np.random.randn(input_size, output_size) * 0.1
+        self.weights = np.random.randn(input_size, output_size) * 0.01
         self.num_params = input_size * output_size
 
         self.use_bias = bias
@@ -333,8 +333,11 @@ class BatchNorm(Layer):
         x_mu = np.mean(x, axis=0)
         # Get the variance of the input.
         x_var = np.var(x, axis=0)
-
-        self.x_norm = (x - x_mu) / np.sqrt(x_var + self.eplison)
+        # Normalize by mean.
+        self.x_mean0 = x - x_mu 
+        # Save the std_inv for backprop.
+        self.std_inv = np.sqrt(x_var + self.eplison)
+        self.x_norm = self.x_mean0 / self.std_inv
 
         return np.dot(self.x_norm, self.gamma) + self.beta
 
@@ -352,11 +355,11 @@ class BatchNorm(Layer):
         # https://kevinzakka.github.io/2016/09/14/batch_normalization.
         dout = (
             (1 / dout.shape[0])
-            * self.x_norm
+            * self.std_inv
             * (
                 dout.shape[0] * dx_norm
-                - np.sum(dx_norm, axis=0, keepdims=True)
-                - np.dot(self.x_norm, np.dot(dx_norm.transpose(), self.x_norm).transpose())
+                - np.sum(dx_norm, axis=0)
+                - self.x_mean0 * np.square(self.std_inv) * np.sum(dx_norm * self.x_mean0, axis=0)
             )
         )
         # Update the layer's params

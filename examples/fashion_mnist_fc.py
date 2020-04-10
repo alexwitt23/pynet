@@ -18,20 +18,13 @@ if __name__ == "__main__":
         layers.Flatten(),
         layers.Linear(28 * 28, 300, bias=True),
         layers.BatchNorm(300),
-        #activations.ReLU6(),
-        layers.Dropout(prob=0.3),
-        layers.Linear(300, 200, bias=True),
         activations.ReLU6(),
-        layers.Dropout(prob=0.3),
-        layers.Linear(200, 40, bias=True),
-        activations.ReLU6(),
-        layers.Dropout(prob=0.3),
-        layers.Linear(40, 10, bias=True),
+        layers.Linear(300, 10, bias=True),
         layers.LogSoftmax(input_size=10, axis=1),
     )
     loss_fn = losses.NLLLoss()
     optimizer = optimizer.sgd(
-        fc_model, lr=3e-1, momentum=0.9, weight_decay=1e-4, nesterov=False
+        fc_model, lr=.2e-1, momentum=0.9, weight_decay=1e-4, nesterov=False
     )
 
     fashion_mnist = keras.datasets.fashion_mnist
