@@ -1,7 +1,7 @@
 """Optimizers for deeplearning."""
 
 from typing import Dict
-import copy
+import abc
 
 import numpy as np
 
@@ -9,15 +9,21 @@ import pynet
 
 
 class Optimizer:
-    pass
+    @abc.abstractmethod
+    def step(self, dout: np.ndarray) -> None:
+        raise NotImplementedError("Must implement step method!")
+
+    @abc.abstractmethod
+    def update(self, weights: np.ndarray, dw: np.ndarray) -> None:
+        raise NotImplementedError("Must implement update method!")
 
 
-class sgd:
+class SGD:
     """Stochastic gradient descent with option of momentum and Nesterov."""
 
     def __init__(
         self,
-        model,
+        model: pynet.nn.model.Model,
         lr: float = 1e-1,
         momentum: float = 0.0,
         weight_decay: float = 0,
@@ -25,6 +31,7 @@ class sgd:
     ) -> None:
         # Assign the member variables
         self.model = model
+
         self.weight_decay = weight_decay
         self.lr = lr
         self.nesterov = nesterov
@@ -34,14 +41,11 @@ class sgd:
         assert momentum < 1, "Please set momentum [0, 1)."
         self.momentum_decay = momentum
         self.momentum = 0
-
         # Set the velocity
-        self.zero_momentum()
+        self.velocity_dict = {idx: 0 for idx in range(len(self.model.layers) + 1)}
 
-        # Tell the model layers which optimizer is being used
-        for layer in self.model.layers:
-            layer.optim_weights = copy.copy(self)
-            layer.optim_biases = copy.copy(self)
+        # Tell the model to load the optimizers for the trainable layers.
+        self.model.initialize(self)
 
     def step(self, dout: np.ndarray) -> None:
         """Take the incoming grad from the loss fn and propogate through layers."""
@@ -66,7 +70,3 @@ class sgd:
         if weights is not None:
             # Update this layer
             weights += (self.momentum + weights * self.weight_decay) * self.lr
-
-    def zero_momentum(self) -> None:
-        """Zeros out the accumulated velocity."""
-        self.velocity_dict = {idx: 0 for idx in range(len(self.model.layers) + 1)}

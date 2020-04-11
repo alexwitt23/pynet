@@ -41,8 +41,6 @@ class Model:
                 layers_dict[idx] = layer.weights
             pickle.dump(layers_dict, f)
 
-        return None
-
     def load(self, path: pathlib) -> None:
         "Load params."
         print("Loading")
@@ -54,4 +52,9 @@ class Model:
             for idx, layer in enumerate(self.layers):
                 layer.weights = np.array(model_data[idx])
 
-        return None
+    def initialize(self, optimizer) -> None:
+        """ Loop over the layers and let them initialize themselves
+        for training. """
+        for layer in self.layers:
+            if layer.trainable:
+                layer.initialize(optimizer)
