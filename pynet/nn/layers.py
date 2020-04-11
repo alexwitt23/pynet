@@ -350,18 +350,17 @@ class BatchNorm(Layer):
         dbeta = np.sum(dout, axis=0)
 
         # dl/ dx
-        dl_dx = 
+        dl_dxhat = self.gamma * dout
 
         # Now get dL / dx. For a derivation, see here:
         # https://kevinzakka.github.io/2016/09/14/batch_normalization.
         dout = (
             (1 / dout.shape[0])
-            * self.gamma
             * self.std_inv
             * (
-                dout.shape[0] * dout
-                - np.sum(dout, axis=0)
-                - self.x_mean0 * np.square(self.std_inv) * np.sum(dout * self.x_mean0, axis=0)
+                dout.shape[0] * dl_dxhat
+                - np.sum(dl_dxhat, axis=0)
+                - self.x_mean0 * np.square(self.std_inv) * np.sum(dl_dxhat * self.x_mean0, axis=0)
             )
         )
         # Update the layer's params
