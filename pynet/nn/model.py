@@ -5,7 +5,7 @@ import pathlib
 import numpy as np
 import pickle
 
-import pynet 
+import pynet
 
 
 class Model:

@@ -1,8 +1,8 @@
 """Contains all the layers in this library."""
 
-from typing import Tuple
-
+from typing import Tuple, List
 import abc
+
 import numpy as np
 
 import pynet
@@ -54,7 +54,7 @@ class Linear(Layer):
         super().__init__()
         self.input_dim = input_size
         self.output_dim = output_size
-        self.weights = np.random.randn(input_size, output_size) * 0.1
+        self.weights = np.random.randn(input_size, output_size) * 0.01
         self.num_params = input_size * output_size
 
         self.use_bias = bias
@@ -63,7 +63,7 @@ class Linear(Layer):
             self.biases = np.zeros((1, output_size))
         else:
             self.biases = None
-        
+
         self.optim_weights: pynet.nn.optimizer.Optimizer = None
         self.optim_biases: pynet.nn.optimizer.Optimizer = None
 
@@ -104,7 +104,7 @@ class Linear(Layer):
 
         if self.biases is not None:
             self.optim_biases.update(self.biases, dout.sum(axis=0))
-            
+
         return din
 
     def parameters(self) -> int:
@@ -290,9 +290,9 @@ class Dropout(Layer):
     """Layer which will randomly cancel out the outputs from units in 
     previous layer."""
 
-    def __init__(self, prob: float = .1) -> None:   
+    def __init__(self, prob: float = 0.1) -> None:
         self.prob = prob
-    
+
     def __call__(self, x: np.ndarray) -> np.ndarray:
         self.mask = np.where(np.random.uniform(size=x.shape) > self.prob, 1, 0)
         return x * self.mask
@@ -302,6 +302,75 @@ class Dropout(Layer):
 
     def parameters(self) -> int:
         return 0
+
+    def input_size(self) -> int:
+        return 0
+
+    def output_size(self) -> int:
+        return 0
+
+
+class BatchNorm(Layer):
+    """Batch normalization was originally proposed as a way to 'whitten' 
+    the layer activations to accelerate convergence, orignal paper: 
+    https://arxiv.org/pdf/1502.03167.pdf.
+
+    There is still active research on this topic and just how batch norm
+    really impacts models. One example, https://arxiv.org/pdf/1805.11604.pdf,
+    claims batch norm smooths the gradient field, helping training be less jittery."""
+
+    def __init__(self, input_shape: List[int], momentum: float = 0.999) -> None:
+        self.momentum = momentum
+        self.gamma = np.ones(input_shape)
+        self.beta = np.zeros(input_shape)
+        self.eplison = 0
+
+        self.optim_weights: pynet.nn.optimizer.Optimizer = None
+        self.optim_biases: pynet.nn.optimizer.Optimizer = None
+
+    def __call__(self, x: np.ndarray) -> np.ndarray:
+        # Get the mean of the input.
+        x_mu = np.mean(x, axis=0)
+        # Get the variance of the input.
+        x_var = np.var(x, axis=0)
+        # Normalize by mean.
+        self.x_mean0 = x - x_mu 
+        # Save the std_inv for backprop.
+        self.std_inv = np.sqrt(x_var + self.eplison)
+        self.x_norm = self.x_mean0 / self.std_inv
+
+        return self.gamma * self.x_norm + self.beta
+
+    def backwards(self, dout: np.ndarray) -> np.ndarray:
+
+        # Backprop to grad to input.
+        # First, the gradient of dL / dgamma = (dL / dy) * (dy / dgamma)
+        dgamma = np.sum(np.dot(self.x_norm.transpose(), dout), axis=0)
+        # The dL / dBeta = (dL / dy) * (dy / dBeta)
+        dbeta = np.sum(dout, axis=0)
+
+        # dl/ dx
+        dl_dxhat = self.gamma * dout
+
+        # Now get dL / dx. For a derivation, see here:
+        # https://kevinzakka.github.io/2016/09/14/batch_normalization.
+        dout = (
+            (1 / dout.shape[0])
+            * self.std_inv
+            * (
+                dout.shape[0] * dl_dxhat
+                - np.sum(dl_dxhat, axis=0)
+                - self.x_mean0 * np.square(self.std_inv) * np.sum(dl_dxhat * self.x_mean0, axis=0)
+            )
+        )
+        # Update the layer's params
+        self.optim_weights.update(self.beta, dbeta)
+        self.optim_biases.update(self.gamma, dgamma)
+
+        return dout
+
+    def parameters(self) -> int:
+        return 2
 
     def input_size(self) -> int:
         return 0

@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
-"""
-
-Usage: PYTHONPATH=$PWD examples/regression_ex.py
-"""
+"""Usage: PYTHONPATH=$(pwd) examples/regression_ex.py"""
 
 import numpy as np
 
