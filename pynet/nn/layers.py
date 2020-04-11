@@ -321,7 +321,7 @@ class BatchNorm(Layer):
 
     def __init__(self, input_shape: List[int], momentum: float = 0.999) -> None:
         self.momentum = momentum
-        self.gamma = np.ones((input_shape, 1))
+        self.gamma = np.ones(input_shape)
         self.beta = np.zeros(input_shape)
         self.eplison = 0
 
@@ -339,27 +339,29 @@ class BatchNorm(Layer):
         self.std_inv = np.sqrt(x_var + self.eplison)
         self.x_norm = self.x_mean0 / self.std_inv
 
-        return np.dot(self.x_norm, self.gamma) + self.beta
+        return self.gamma * self.x_norm + self.beta
 
     def backwards(self, dout: np.ndarray) -> np.ndarray:
 
         # Backprop to grad to input.
         # First, the gradient of dL / dgamma = (dL / dy) * (dy / dgamma)
-        dgamma = np.dot(self.x_norm.transpose(), dout)
+        dgamma = np.sum(np.dot(self.x_norm.transpose(), dout), axis=0)
         # The dL / dBeta = (dL / dy) * (dy / dBeta)
         dbeta = np.sum(dout, axis=0)
-        # Get the dL / dx_norm = (dL / dy) * (dy / dx_norm)
-        dx_norm = np.dot(dout, self.gamma)
+
+        # dl/ dx
+        dl_dx = 
 
         # Now get dL / dx. For a derivation, see here:
         # https://kevinzakka.github.io/2016/09/14/batch_normalization.
         dout = (
             (1 / dout.shape[0])
+            * self.gamma
             * self.std_inv
             * (
-                dout.shape[0] * dx_norm
-                - np.sum(dx_norm, axis=0)
-                - self.x_mean0 * np.square(self.std_inv) * np.sum(dx_norm * self.x_mean0, axis=0)
+                dout.shape[0] * dout
+                - np.sum(dout, axis=0)
+                - self.x_mean0 * np.square(self.std_inv) * np.sum(dout * self.x_mean0, axis=0)
             )
         )
         # Update the layer's params

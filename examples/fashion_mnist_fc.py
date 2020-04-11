@@ -24,7 +24,7 @@ if __name__ == "__main__":
     )
     loss_fn = losses.NLLLoss()
     optimizer = optimizer.sgd(
-        fc_model, lr=.2e-1, momentum=0.9, weight_decay=1e-4, nesterov=False
+        fc_model, lr=2e-1, momentum=0.9, weight_decay=1e-4, nesterov=False
     )
 
     fashion_mnist = keras.datasets.fashion_mnist
@@ -46,7 +46,7 @@ if __name__ == "__main__":
             if b % 6000 == 0:
                 print(f"Epoch {epoch}, Loss: {loss}")
 
-        if epoch % 40 == 0:
+        if epoch % 10 == 0:
             optimizer.lr /= 10
 
         # Loop over eval data
