@@ -345,7 +345,7 @@ class BatchNorm(Layer):
 
         # Backprop to grad to input.
         # First, the gradient of dL / dgamma = (dL / dy) * (dy / dgamma)
-        dgamma = np.sum(np.dot(self.x_norm.transpose(), dout), axis=0, keepdims=True)
+        dgamma = np.dot(self.x_norm.transpose(), dout)
         # The dL / dBeta = (dL / dy) * (dy / dBeta)
         dbeta = np.sum(dout, axis=0)
         # Get the dL / dx_norm = (dL / dy) * (dy / dx_norm)
@@ -364,7 +364,7 @@ class BatchNorm(Layer):
         )
         # Update the layer's params
         self.optim_weights.update(self.beta, dbeta)
-        self.optim_biases.update(self.gamma, dgamma.transpose())
+        self.optim_biases.update(self.gamma, dgamma)
 
         return dout
 
