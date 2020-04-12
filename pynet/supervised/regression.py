@@ -42,53 +42,49 @@ class LinearRegression:
 
         return [a, b]
 
+
 # TODO
 class MultipleLinearRegression:
-
     def __init__(self) -> None:
-        pass 
+        pass
 
     def fit(self, x: np.ndarray, y: np.ndarray):
         """ An analytical solution exists. We can also
         solve iteratively for practice. """
 
         # Do the analytical solution
-        # y = Beta * X is the original equation, 
+        # y = Beta * X is the original equation,
         # solving for Beta: Beta = (X * X').inv * X * y.
 
 
 # TODO(alex) Polynomial Regression
 class PolynomialRegression:
-
     def __init__(self, x: np.ndarray, y: np.ndarray, degree: int = 1) -> None:
         self.x = x
         self.y = y
-        self.beta = np.random.uniform(size=(degree + 1)) * 0.0001
+        self.beta = np.random.uniform(size=(degree + 1))
         self.degree = degree
 
     def fit(self) -> np.ndarray:
 
-        for _ in range(10000):
+        for _ in range(100000):
             out = np.polynomial.polynomial.polyval(self.x, self.beta)
-
-            loss = np.mean((self.y - out) ** 2) 
+            loss = np.mean((self.y - out) ** 2)
             print(loss)
-            """
-            print(
-                    np.dot(
-                        np.array([self.x ** n for n in range(self.degree)]), (self.y - out) / out.shape[0]
-                    ) / self.x.shape[0]
-                
+
+            # dL/dy 
+            dL_dy = self.y - out
+
+            dbeta = (
+                np.dot(
+                    np.array([(n + 1) * (self.x ** n) for n in range(self.degree + 1)]),
+                    dL_dy
+                )
+                / self.x.shape[0]
             )
-            """
-            dbeta = np.dot(
-                np.array([(n + 1) * self.x ** n for n in range(self.degree + 1)]), (self.y - out) / out.shape[0]
-            ) / self.x.shape[0]
-            self.beta += 0.001 * dbeta 
+            self.beta += 0.0000000000001 * dbeta
 
         return self.beta
-
-
 
 
 # TODO(alex) Support Vector Machine

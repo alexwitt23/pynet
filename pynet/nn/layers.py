@@ -334,7 +334,7 @@ class BatchNorm(Layer):
         # Get the variance of the input.
         x_var = np.var(x, axis=0)
         # Normalize by mean.
-        self.x_mean0 = x - x_mu 
+        self.x_mean0 = x - x_mu
         # Save the std_inv for backprop.
         self.std_inv = np.sqrt(x_var + self.eplison)
         self.x_norm = self.x_mean0 / self.std_inv
@@ -360,7 +360,9 @@ class BatchNorm(Layer):
             * (
                 dout.shape[0] * dl_dxhat
                 - np.sum(dl_dxhat, axis=0)
-                - self.x_mean0 * np.square(self.std_inv) * np.sum(dl_dxhat * self.x_mean0, axis=0)
+                - self.x_mean0
+                * np.square(self.std_inv)
+                * np.sum(dl_dxhat * self.x_mean0, axis=0)
             )
         )
         # Update the layer's params
