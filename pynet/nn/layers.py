@@ -345,6 +345,7 @@ class BatchNorm(Layer):
         self.gamma = np.ones(input_shape)
         self.beta = np.zeros(input_shape)
         self.eplison = 0
+        self.trainable = True 
 
         self.optim_weights: pynet.nn.optimizer.Optimizer = None
         self.optim_biases: pynet.nn.optimizer.Optimizer = None
@@ -361,6 +362,11 @@ class BatchNorm(Layer):
         self.x_norm = self.x_mean0 / self.std_inv
 
         return self.gamma * self.x_norm + self.beta
+
+    def initialize(self, optimizer) -> None:
+
+        self.optim_weights: pynet.nn.optimizer.Optimizer = copy.copy(optimizer)
+        self.optim_biases: pynet.nn.optimizer.Optimizer = copy.copy(optimizer)
 
     def backwards(self, dout: np.ndarray) -> np.ndarray:
 
