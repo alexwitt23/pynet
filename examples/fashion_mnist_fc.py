@@ -24,9 +24,9 @@ if __name__ == "__main__":
     )
     loss_fn = losses.NLLLoss()
     #optim = optimizer.SGD(fc_model, lr=2e-1, momentum=0.9, weight_decay=1e-4)
-
     #optim = optimizer.AdaGrad(fc_model, lr=1e-3)
-    optim = optimizer.RMSProp(fc_model, lr=1e-3)
+    #optim = optimizer.RMSProp(fc_model, lr=1e-3)
+    optim = optimizer.Adam(fc_model, lr=1e-3)
     fashion_mnist = keras.datasets.fashion_mnist
 
     (train_images, train_labels), (test_images, test_labels) = fashion_mnist.load_data()

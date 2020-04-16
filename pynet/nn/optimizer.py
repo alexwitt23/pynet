@@ -1,4 +1,6 @@
-""" Optimizers for deeplearning. """
+""" Optimizers for deeplearning. Broadly speaking there is no one best 
+adaptive learning rate that is better than the rest. It can be problem 
+specific or depend on the user's familiarity with the algorithim. """
 
 import abc
 from typing import Dict
@@ -119,4 +121,36 @@ class RMSProp(Optimizer):
 
 
 class Adam(Optimizer):
-    """ (Kingma and Ba, 2014) """
+    """ (Kingma and Ba, 2014) Adam can be described as a variant on RMSProp and momentum. """
+    def __init__(self, model, lr: float = 1e-3, rho1: float = .9, rho2: float = .999) -> None:
+
+        super().__init__(model)
+        self.lr = 0.001
+        self.delta = 1e-8
+        self.rho1 = rho1
+        self.rho2 = rho2
+
+        # Initialize the 1st and 2nd moments to None
+        self.s = None
+        self.r = None
+
+        self.model.initialize(self)
+
+    def update(self, weights: np.ndarray, dw: np.ndarray) -> None:
+
+        if self.s is None:
+            self.s = np.zeros_like(weights)
+            self.r = np.zeros_like(weights)
+
+        self.s = self.rho1 * self.s + (1 - self.rho1) * dw 
+        self.r = self.rho2 * self.r + (1 - self.rho2) * np.square(dw)
+
+        # The following operations help to jump the moments since both
+        # start out as 0.
+        # Correct bias in first moment estimate
+        s_hat = self.s / (1 - self.rho1)
+        # Correct bias in second moment estimate
+        r_hat = self.r / (1 - self.rho2)
+
+        if weights is not None:
+            weights -= self.lr * s_hat / (self.delta + np.sqrt(r_hat))
