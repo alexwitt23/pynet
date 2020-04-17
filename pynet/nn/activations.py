@@ -49,6 +49,7 @@ class ReLU6(Layer):
     def __init__(self) -> None:
         super().__init__()
         self.weights = False
+        self.trainable = False
 
     def __call__(self, x: np.ndarray) -> np.ndarray:
         self.input = x

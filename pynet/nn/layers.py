@@ -1,7 +1,8 @@
 """Contains all the layers in this library."""
 
-from typing import Tuple, List
 import abc
+import copy
+from typing import Tuple, List
 
 import numpy as np
 
@@ -9,8 +10,8 @@ import pynet
 
 
 class Layer(abc.ABC):
-    """Define a collection of member functions that must be 
-    implemented by all layers."""
+    """ Define a collection of member functions that must be 
+    implemented by all layers. """
 
     @abc.abstractmethod
     def __call__(self, x: np.ndarray) -> np.ndarray:
@@ -56,6 +57,7 @@ class Linear(Layer):
         self.output_dim = output_size
         self.weights = np.random.randn(input_size, output_size) * 0.01
         self.num_params = input_size * output_size
+        self.trainable = True
 
         self.use_bias = bias
 
@@ -63,9 +65,6 @@ class Linear(Layer):
             self.biases = np.zeros((1, output_size))
         else:
             self.biases = None
-
-        self.optim_weights: pynet.nn.optimizer.Optimizer = None
-        self.optim_biases: pynet.nn.optimizer.Optimizer = None
 
     def __call__(self, x: np.ndarray) -> np.ndarray:
         """Forward pass.
@@ -83,6 +82,11 @@ class Linear(Layer):
             self.out += self.biases
 
         return self.out
+
+    def initialize(self, optimizer) -> None:
+
+        self.optim_weights: pynet.nn.optimizer.Optimizer = copy.copy(optimizer)
+        self.optim_biases: pynet.nn.optimizer.Optimizer = copy.copy(optimizer)
 
     def backwards(self, dout: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """
@@ -136,6 +140,7 @@ class Conv2D(Layer):
         self.kernel_size = kernel_size  # (W, H)
         self.stride = stride
         self.padding = padding
+        self.trainable = True
 
         # Create numpy filter volume
         self.kernel = np.random.randn(kernel_size[0], kernel_size[1], out_channels)
@@ -144,6 +149,10 @@ class Conv2D(Layer):
             self.biases = np.zeros((1, out_channels))
         else:
             self.biases = None
+
+    def initialize(self, optimizer) -> None:
+        self.weights_optim = copy.copy(optimizer)
+        self.bias_optim = copy.copy(optimizer)
 
     def __call__(self, x: np.ndarray) -> np.ndarray:
         """Forward pass through convolutional layer. This will be implemented in a 
@@ -203,11 +212,17 @@ class Conv2D(Layer):
 
     def backwards(self, dout: np.ndarray) -> np.ndarray:
         # Take the input gradient and reshape for reshaped weights.
-
         dout = dout.transpose(1, 2, 3, 0).reshape(self.num_filters, -1)
 
         # Note the similarity to the dense layer:
-        return np.dot(dout.transpose(), self.weights_col)
+        retval = np.dot(dout.transpose(), self.weights_col)
+
+        dw = dout.dot(self.weights_col.transpose()).reshape(self.kernel)
+        db = np.sum(dout, axis=1)
+        self.weights_optim.update(self.kernel, dw)
+        self.bias_optim.update(self.biases, db)
+
+        return retval
 
     def input_size(self):
         pass
@@ -232,6 +247,7 @@ class LogSoftmax(Layer):
         self.axis = axis
         self.num_params = 0
         self.weights = None
+        self.trainable = False
 
     def __call__(self, x: np.ndarray) -> np.ndarray:
         self.input = x
@@ -262,6 +278,10 @@ class Flatten(Layer):
 
     def __init__(self) -> None:
         self.weights = None
+        self.trainable = False
+
+    def initialize(self, optimizer) -> None:
+        pass
 
     def __call__(self, x: np.ndarray) -> np.ndarray:
         """Assume batch is first..
@@ -271,7 +291,7 @@ class Flatten(Layer):
 
     def backwards(self, dout: np.ndarray) -> None:
         # Reshape gradient to input size
-        return dout.reshape(self.input_size), None
+        return dout.reshape(self.input_size)
 
     def update(self, grad: np.ndarray) -> None:
         pass
@@ -311,19 +331,20 @@ class Dropout(Layer):
 
 
 class BatchNorm(Layer):
-    """Batch normalization was originally proposed as a way to 'whitten' 
+    """ Batch normalization was originally proposed as a way to 'whitten' 
     the layer activations to accelerate convergence, orignal paper: 
     https://arxiv.org/pdf/1502.03167.pdf.
 
     There is still active research on this topic and just how batch norm
     really impacts models. One example, https://arxiv.org/pdf/1805.11604.pdf,
-    claims batch norm smooths the gradient field, helping training be less jittery."""
+    claims batch norm smooths the gradient field, helping training be less jittery. """
 
     def __init__(self, input_shape: List[int], momentum: float = 0.999) -> None:
         self.momentum = momentum
         self.gamma = np.ones(input_shape)
         self.beta = np.zeros(input_shape)
         self.eplison = 0
+        self.trainable = True
 
         self.optim_weights: pynet.nn.optimizer.Optimizer = None
         self.optim_biases: pynet.nn.optimizer.Optimizer = None
@@ -334,12 +355,17 @@ class BatchNorm(Layer):
         # Get the variance of the input.
         x_var = np.var(x, axis=0)
         # Normalize by mean.
-        self.x_mean0 = x - x_mu 
+        self.x_mean0 = x - x_mu
         # Save the std_inv for backprop.
         self.std_inv = np.sqrt(x_var + self.eplison)
         self.x_norm = self.x_mean0 / self.std_inv
 
         return self.gamma * self.x_norm + self.beta
+
+    def initialize(self, optimizer) -> None:
+
+        self.optim_weights: pynet.nn.optimizer.Optimizer = copy.copy(optimizer)
+        self.optim_biases: pynet.nn.optimizer.Optimizer = copy.copy(optimizer)
 
     def backwards(self, dout: np.ndarray) -> np.ndarray:
 
@@ -360,7 +386,9 @@ class BatchNorm(Layer):
             * (
                 dout.shape[0] * dl_dxhat
                 - np.sum(dl_dxhat, axis=0)
-                - self.x_mean0 * np.square(self.std_inv) * np.sum(dl_dxhat * self.x_mean0, axis=0)
+                - self.x_mean0
+                * np.square(self.std_inv)
+                * np.sum(dl_dxhat * self.x_mean0, axis=0)
             )
         )
         # Update the layer's params

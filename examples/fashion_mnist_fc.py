@@ -23,10 +23,10 @@ if __name__ == "__main__":
         layers.LogSoftmax(input_size=10, axis=1),
     )
     loss_fn = losses.NLLLoss()
-    optimizer = optimizer.sgd(
-        fc_model, lr=2e-1, momentum=0.9, weight_decay=1e-4, nesterov=False
-    )
-
+    # optim = optimizer.SGD(fc_model, lr=2e-1, momentum=0.9, weight_decay=1e-4)
+    # optim = optimizer.AdaGrad(fc_model, lr=1e-3)
+    # optim = optimizer.RMSProp(fc_model, lr=1e-3)
+    optim = optimizer.Adam(fc_model, lr=1e-3)
     fashion_mnist = keras.datasets.fashion_mnist
 
     (train_images, train_labels), (test_images, test_labels) = fashion_mnist.load_data()
@@ -41,13 +41,13 @@ if __name__ == "__main__":
                 out = (out,)
             out += (np.expand_dims(train_labels[b : b + batch_size], axis=1),)
             loss = loss_fn(*out)
-            optimizer.step(loss_fn.backwards())
+            optim.step(loss_fn.backwards())
 
             if b % 6000 == 0:
                 print(f"Epoch {epoch}, Loss: {loss}")
 
         if epoch % 10 == 0:
-            optimizer.lr /= 10
+            optim.lr /= 10
 
         # Loop over eval data
         num_right = 0
