@@ -62,7 +62,6 @@ class ReLU6(Layer):
         dy[self.input <= 0] = 0
         return dy
 
-
     def update(self, grad: np.ndarray) -> None:
         pass
 

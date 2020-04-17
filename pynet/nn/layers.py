@@ -1,8 +1,8 @@
 """Contains all the layers in this library."""
 
-from typing import Tuple, List
 import abc
-import copy 
+import copy
+from typing import Tuple, List
 
 import numpy as np
 
@@ -10,8 +10,8 @@ import pynet
 
 
 class Layer(abc.ABC):
-    """Define a collection of member functions that must be 
-    implemented by all layers."""
+    """ Define a collection of member functions that must be 
+    implemented by all layers. """
 
     @abc.abstractmethod
     def __call__(self, x: np.ndarray) -> np.ndarray:
@@ -213,10 +213,10 @@ class Conv2D(Layer):
     def backwards(self, dout: np.ndarray) -> np.ndarray:
         # Take the input gradient and reshape for reshaped weights.
         dout = dout.transpose(1, 2, 3, 0).reshape(self.num_filters, -1)
-        
+
         # Note the similarity to the dense layer:
         retval = np.dot(dout.transpose(), self.weights_col)
-        
+
         dw = dout.dot(self.weights_col.transpose()).reshape(self.kernel)
         db = np.sum(dout, axis=1)
         self.weights_optim.update(self.kernel, dw)
@@ -248,7 +248,6 @@ class LogSoftmax(Layer):
         self.num_params = 0
         self.weights = None
         self.trainable = False
-
 
     def __call__(self, x: np.ndarray) -> np.ndarray:
         self.input = x
@@ -332,20 +331,20 @@ class Dropout(Layer):
 
 
 class BatchNorm(Layer):
-    """Batch normalization was originally proposed as a way to 'whitten' 
+    """ Batch normalization was originally proposed as a way to 'whitten' 
     the layer activations to accelerate convergence, orignal paper: 
     https://arxiv.org/pdf/1502.03167.pdf.
 
     There is still active research on this topic and just how batch norm
     really impacts models. One example, https://arxiv.org/pdf/1805.11604.pdf,
-    claims batch norm smooths the gradient field, helping training be less jittery."""
+    claims batch norm smooths the gradient field, helping training be less jittery. """
 
     def __init__(self, input_shape: List[int], momentum: float = 0.999) -> None:
         self.momentum = momentum
         self.gamma = np.ones(input_shape)
         self.beta = np.zeros(input_shape)
         self.eplison = 0
-        self.trainable = True 
+        self.trainable = True
 
         self.optim_weights: pynet.nn.optimizer.Optimizer = None
         self.optim_biases: pynet.nn.optimizer.Optimizer = None

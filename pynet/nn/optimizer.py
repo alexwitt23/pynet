@@ -11,7 +11,6 @@ import pynet
 
 
 class Optimizer:
-
     def __init__(self, model) -> None:
         self.model = model
 
@@ -20,7 +19,7 @@ class Optimizer:
         self.dout = dout
 
         for layer in reversed(self.model.layers):
-            
+
             # Propagate the gradient back through this layer, and get gradietn w.r.t weights
             self.dout = layer.backwards(self.dout)
 
@@ -28,16 +27,13 @@ class Optimizer:
     def update(self, weights: np.ndarray, dw: np.ndarray) -> None:
         raise NotImplementedError("Must implement update method!")
 
+
 # TODO (add Nesterov)
 class SGD(Optimizer):
     """ Stochastic gradient descent with option of momentum and Nesterov. """
 
     def __init__(
-        self,
-        model,
-        lr: float = 1e-1,
-        momentum: float = 0.999,
-        weight_decay: float = 0,
+        self, model, lr: float = 1e-1, momentum: float = 0.999, weight_decay: float = 0,
     ) -> None:
 
         super().__init__(model)
@@ -87,10 +83,11 @@ class AdaGrad(Optimizer):
         if self.grad_history is None:
             self.grad_history = np.zeros_like(weights)
 
-        self.grad_history += np.square(dw)  
+        self.grad_history += np.square(dw)
 
         if weights is not None:
             weights -= self.lr * dw / (self.epsilon + np.sqrt(self.grad_history))
+
 
 # TODO(alex) add Nesterov
 class RMSProp(Optimizer):
@@ -98,10 +95,10 @@ class RMSProp(Optimizer):
     weighted moving average. This lessens the blow of adapting large gradients too 
     quickly at the beginning of training. """
 
-    def __init__(self, model, lr: float = 1e-1, decay: float = .99) -> None:
+    def __init__(self, model, lr: float = 1e-1, decay: float = 0.99) -> None:
 
         super().__init__(model)
-        self.lr = lr 
+        self.lr = lr
         self.decay = decay
         self.model = model
         self.epsilon = 1e-7  # For numerical stability
@@ -114,7 +111,9 @@ class RMSProp(Optimizer):
         if self.grad_history is None:
             self.grad_history = np.zeros_like(weights)
 
-        self.grad_history = self.grad_history * self.decay + (1 - self.decay) * np.square(dw)  
+        self.grad_history = self.grad_history * self.decay + (
+            1 - self.decay
+        ) * np.square(dw)
 
         if weights is not None:
             weights -= self.lr * dw / (self.epsilon + np.sqrt(self.grad_history))
@@ -122,7 +121,10 @@ class RMSProp(Optimizer):
 
 class Adam(Optimizer):
     """ (Kingma and Ba, 2014) Adam can be described as a variant on RMSProp and momentum. """
-    def __init__(self, model, lr: float = 1e-3, rho1: float = .9, rho2: float = .999) -> None:
+
+    def __init__(
+        self, model, lr: float = 1e-3, rho1: float = 0.9, rho2: float = 0.999
+    ) -> None:
 
         super().__init__(model)
         self.lr = 0.001
@@ -142,7 +144,7 @@ class Adam(Optimizer):
             self.s = np.zeros_like(weights)
             self.r = np.zeros_like(weights)
 
-        self.s = self.rho1 * self.s + (1 - self.rho1) * dw 
+        self.s = self.rho1 * self.s + (1 - self.rho1) * dw
         self.r = self.rho2 * self.r + (1 - self.rho2) * np.square(dw)
 
         # The following operations help to jump the moments since both

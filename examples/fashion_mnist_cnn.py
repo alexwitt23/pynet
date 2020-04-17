@@ -21,7 +21,7 @@ if __name__ == "__main__":
         layers.Conv2D(in_channels=32, out_channels=2, kernel_size=(3, 3)),
         layers.Flatten(),
         layers.Linear(968, 10, bias=True),
-        layers.LogSoftmax(input_size=10, axis=1)
+        layers.LogSoftmax(input_size=10, axis=1),
     )
 
     loss_fn = losses.NLLLoss()
