@@ -1,25 +1,20 @@
 #!/usr/bin/env python3
-"""Implementation of different types of regression.
+""" Implementation of different types of regression.
 
-Source:
-https://towardsdatascience.com/machine-learning-for-beginners-d247a9420dab
-"""
+Source: https://towardsdatascience.com/machine-learning-for-beginners-d247a9420dab """
+
 from typing import List
 
 import numpy as np
 
 
 class LinearRegression:
-    # TODO(alex) implement with gradient?
-    """Linear regression with least squares error.
-    This is a really succinct derivation using calculus:
-    https://www.youtube.com/watch?v=ewnc1cXJmGA."""
 
-    def __init__(self) -> None:
-        pass
+    """ Linear regression with least squares error. This is a really succinct derivation
+    using calculus: https://www.youtube.com/watch?v=ewnc1cXJmGA. """
 
     def fit(self, x: np.ndarray, y: np.ndarray) -> List[float]:
-        """Fitting function.
+        """ Function which will perform the linear regression.
 
         Args:
             x: input independent variable data.
@@ -43,18 +38,26 @@ class LinearRegression:
         return [a, b]
 
 
-# TODO
 class MultipleLinearRegression:
-    def __init__(self) -> None:
-        pass
+    """ Multiple linear regression describes how one variable is influenced by more than
+    one input variables. The derivation is detailed here: 
+    http://pillowlab.princeton.edu/teaching/mathtools16/slides/lec10_LeastSquaresRegression.pdf.
 
-    def fit(self, x: np.ndarray, y: np.ndarray):
-        """ An analytical solution exists. We can also
-        solve iteratively for practice. """
+    The idea is to have **B** represent the coefficients of your [x_0, ..., x_i]
+    independent variable vector. Therefore you want to minimize the mean squared error
+    between Bx and Y, or e^2 = ||Y - Bx||^2.
+    """
 
-        # Do the analytical solution
-        # y = Beta * X is the original equation,
-        # solving for Beta: Beta = (X * X').inv * X * y.
+    def fit(self, x: np.ndarray, y: np.ndarray) -> np.ndarray:
+        """ Function which will perform the multiple linear regression.
+
+        Args:
+            x: input independent variable data.
+            y: dependent variable.
+
+        """
+        return np.linalg.inv(x.transpose() * x) * x.transpose() * y
+
 
 
 # TODO(alex) Polynomial Regression
